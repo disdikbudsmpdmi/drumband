@@ -140,7 +140,35 @@
                 font-size: 5pt !important;
                 margin-top: 0.8mm !important;
             }
+
+            /* Mode Cetak Rekap Presensi (Tabel A4, bukan kartu) */
+            #print-capture-area.rekap-mode {
+                display: block !important;
+                width: 100% !important;
+                padding: 0 !important;
+                gap: 0 !important;
+            }
         }
+
+        /* Struktur Visual Lembar Cetak Rekap Presensi */
+        .rekap-print-sheet { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; width: 100%; }
+        .rekap-print-header { display: flex; align-items: center; gap: 14px; border-bottom: 2.5px solid #1d4ed8; padding-bottom: 10px; margin-bottom: 14px; }
+        .rekap-print-header img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; }
+        .rekap-print-header h1 { font-size: 13pt; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; color: #1e3a8a; }
+        .rekap-print-header h2 { font-size: 15pt; margin: 2px 0 0 0; font-weight: 800; }
+        .rekap-print-info { width: 100%; font-size: 10.5pt; margin-bottom: 14px; border-collapse: collapse; }
+        .rekap-print-info td { padding: 2px 6px; }
+        .rekap-print-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 16px; }
+        .rekap-print-table th, .rekap-print-table td { border: 1px solid #94a3b8; padding: 6px 8px; text-align: left; }
+        .rekap-print-table thead th { background-color: #1d4ed8 !important; color: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .rekap-print-summary { font-size: 10.5pt; margin-bottom: 34px; }
+        .rekap-print-footer { display: flex; justify-content: flex-end; }
+        .rekap-print-sign { text-align: center; font-size: 10.5pt; min-width: 220px; }
+        .rekap-print-sign-space { height: 60px; }
+
+        /* Panel "Menu Lainnya" (Mobile Bottom Sheet) */
+        #menu-lainnya-overlay { transition: opacity 0.2s ease; }
+        #menu-lainnya-panel { transition: transform 0.25s ease; }
     </style>
 </head>
 <body>
@@ -485,28 +513,69 @@ const firebaseConfig = {
     // 7. ARSITEKTUR UI & ROUTING
     // =========================================================================
     const renderLayout = (role, content) => {
+        // Properti "utama: true" menandai menu yang akan selalu tampil di bottom nav HP.
+        // Menu tanpa properti tersebut otomatis dikelompokkan ke dalam tombol "Lainnya" saat di HP.
         const menuItems = role === 'admin' ? [
-            { id: 'admin-dashboard', icon: 'fa-home', label: 'Dashboard' },
-            { id: 'admin-anggota', icon: 'fa-users', label: 'Anggota' },
+            { id: 'admin-dashboard', icon: 'fa-home', label: 'Dashboard', utama: true },
+            { id: 'admin-anggota', icon: 'fa-users', label: 'Anggota', utama: true },
+            { id: 'admin-scan', icon: 'fa-qrcode', label: 'Scan Presensi', utama: true },
+            { id: 'admin-jadwal', icon: 'fa-calendar-alt', label: 'Jadwal', utama: true },
             { id: 'admin-cetak', icon: 'fa-address-card', label: 'Cetak Kartu' },
-            { id: 'admin-scan', icon: 'fa-qrcode', label: 'Scan Presensi' },
-            { id: 'admin-jadwal', icon: 'fa-calendar-alt', label: 'Jadwal' },
+            { id: 'admin-rekap', icon: 'fa-clipboard-list', label: 'Rekap Presensi' },
             { id: 'admin-materi', icon: 'fa-music', label: 'Materi' },
             { id: 'admin-pengumuman', icon: 'fa-bullhorn', label: 'Info' },
             { id: 'admin-pengaturan', icon: 'fa-cog', label: 'Pengaturan' }
         ] : [
-            { id: 'user-dashboard', icon: 'fa-id-card', label: 'My Profile' },
-            { id: 'user-jadwal', icon: 'fa-calendar-alt', label: 'Jadwal' },
-            { id: 'user-kehadiran', icon: 'fa-clock', label: 'Kehadiran' },
-            { id: 'user-materi', icon: 'fa-book', label: 'Materi' }
+            { id: 'user-dashboard', icon: 'fa-id-card', label: 'My Profile', utama: true },
+            { id: 'user-jadwal', icon: 'fa-calendar-alt', label: 'Jadwal', utama: true },
+            { id: 'user-kehadiran', icon: 'fa-clock', label: 'Kehadiran', utama: true },
+            { id: 'user-materi', icon: 'fa-book', label: 'Materi', utama: true }
         ];
 
-        let navLinks = menuItems.map(m => `
-            <a href="#" onclick="navigate('${m.id}')" class="flex flex-col md:flex-row items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition ${state.activeView === m.id ? 'text-blue-600 bg-blue-50 font-bold' : ''}">
+        const buatLinkMenu = (m, kelasTambahan = '') => `
+            <a href="#" onclick="navigate('${m.id}')" class="flex flex-col md:flex-row items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition ${state.activeView === m.id ? 'text-blue-600 bg-blue-50 font-bold' : ''} ${kelasTambahan}">
                 <i class="fas ${m.icon} md:mr-3 text-xl md:text-lg mb-1 md:mb-0"></i>
                 <span class="text-xs md:text-base">${m.label}</span>
             </a>
-        `).join('');
+        `;
+
+        // navLinks: daftar lengkap untuk sidebar desktop
+        let navLinks = menuItems.map(m => buatLinkMenu(m)).join('');
+
+        // Untuk bottom nav mobile: pisahkan menu utama & menu lainnya
+        const menuUtama = menuItems.filter(m => m.utama);
+        const menuLainnya = menuItems.filter(m => !m.utama);
+        const adaMenuLainnya = menuLainnya.length > 0;
+        const menuLainnyaAktif = menuLainnya.some(m => m.id === state.activeView);
+
+        let mobileNavLinks = menuUtama.map(m => buatLinkMenu(m, 'flex-1')).join('');
+
+        let tombolLainnya = adaMenuLainnya ? `
+            <a href="#" onclick="toggleMenuLainnya()" class="flex flex-1 flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition ${menuLainnyaAktif ? 'text-blue-600 bg-blue-50 font-bold' : ''}">
+                <i class="fas fa-ellipsis-h text-xl mb-1"></i>
+                <span class="text-xs">Lainnya</span>
+            </a>
+        ` : '';
+
+        let panelLainnya = adaMenuLainnya ? `
+            <div id="menu-lainnya-overlay" class="hidden md:hidden fixed inset-0 bg-black/40 z-[9998]" onclick="toggleMenuLainnya()"></div>
+            <div id="menu-lainnya-panel" class="hidden md:hidden fixed bottom-0 left-0 w-full glass-panel rounded-t-3xl p-5 pb-8 z-[9999] fade-in shadow-[0_-10px_30px_rgba(0,0,0,0.15)]">
+                <div class="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                <h3 class="text-center font-bold text-gray-700 mb-4">Menu Lainnya</h3>
+                <div class="grid grid-cols-4 gap-3">
+                    ${menuLainnya.map(m => `
+                        <a href="#" onclick="navigate('${m.id}')" class="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition text-center ${state.activeView === m.id ? 'text-blue-600 bg-blue-50 font-bold' : ''}">
+                            <i class="fas ${m.icon} text-xl mb-1.5"></i>
+                            <span class="text-[11px] leading-tight">${m.label}</span>
+                        </a>
+                    `).join('')}
+                    <a href="#" onclick="doLogout()" class="flex flex-col items-center p-3 text-red-500 hover:bg-red-50 rounded-xl transition text-center">
+                        <i class="fas fa-sign-out-alt text-xl mb-1.5"></i>
+                        <span class="text-[11px] leading-tight">Keluar</span>
+                    </a>
+                </div>
+            </div>
+        ` : '';
 
         return `
             <div class="flex h-full w-full bg-gray-50">
@@ -531,10 +600,19 @@ const firebaseConfig = {
                     </div>
                     <div class="p-4 md:p-8">${content}</div>
                 </main>
-                <nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-gray-200 flex justify-around p-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">${navLinks}</nav>
+                <nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-gray-200 flex justify-around p-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">${mobileNavLinks}${tombolLainnya}</nav>
+                ${panelLainnya}
             </div>
         `;
     }
+
+    // Buka/tutup panel "Menu Lainnya" pada bottom nav mobile
+    window.toggleMenuLainnya = () => {
+        const panel = document.getElementById('menu-lainnya-panel');
+        const overlay = document.getElementById('menu-lainnya-overlay');
+        if (panel) panel.classList.toggle('hidden');
+        if (overlay) overlay.classList.toggle('hidden');
+    };
 
     // =========================================================================
     // 8. LOGIC HALAMAN ADMIN (PELATIH)
@@ -1052,6 +1130,7 @@ const firebaseConfig = {
         const printArea = document.getElementById('print-capture-area');
         printArea.innerHTML = '';
         printArea.classList.remove('hidden');
+        printArea.classList.remove('rekap-mode');
 
         // Bikin container kartu khusus print
         const cardWrapper = document.createElement('div');
@@ -1114,6 +1193,7 @@ const firebaseConfig = {
         const printArea = document.getElementById('print-capture-area');
         printArea.innerHTML = '';
         printArea.classList.remove('hidden');
+        printArea.classList.remove('rekap-mode');
 
         // Bikin semua struktur kartu sekaligus
         list.forEach((a, index) => {
@@ -1268,6 +1348,180 @@ const firebaseConfig = {
             });
         }, 400);
     }
+
+    // -- Admin: Rekap & Cetak Presensi --
+    window.gantiRekapJadwal = (idJadwal) => {
+        state.selectedRekapJadwal = idJadwal;
+        viewAdminRekapPresensi();
+    };
+
+    async function viewAdminRekapPresensi() {
+        UI.showLoading();
+        const jadwalList = await DB.get('jadwal');
+        const anggotaList = await DB.get('anggota');
+
+        // Urutkan jadwal dari yang terbaru
+        const jadwalSorted = [...jadwalList].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+        // Tentukan jadwal aktif: dari pilihan sebelumnya, atau default jadwal paling baru
+        let activeJadwalId = state.selectedRekapJadwal || (jadwalSorted[0] ? jadwalSorted[0].id : '');
+        state.selectedRekapJadwal = activeJadwalId;
+        const jadwalAktif = jadwalSorted.find(j => j.id === activeJadwalId);
+
+        let rekapRows = [];
+        let totalHadir = 0, totalAlpha = 0;
+
+        if (jadwalAktif) {
+            const presensiJadwal = await DB.getPresensiJadwal(jadwalAktif.id);
+            rekapRows = anggotaList.map(a => {
+                const recMasuk = presensiJadwal.find(p => p.idAnggota === a.id && p.waktuMasuk);
+                const recPulang = presensiJadwal.find(p => p.idAnggota === a.id && p.waktuPulang);
+                const hadir = !!recMasuk;
+                if (hadir) totalHadir++; else totalAlpha++;
+                return {
+                    nama: a.namaLengkap,
+                    seksi: a.seksi || '-',
+                    kelas: a.kelas || '-',
+                    waktuMasuk: recMasuk ? recMasuk.waktuMasuk : '-',
+                    waktuPulang: recPulang ? recPulang.waktuPulang : '-',
+                    status: hadir ? 'Hadir' : 'Alpha'
+                };
+            });
+        }
+
+        // Simpan ke cache agar bisa dipakai saat mencetak
+        state.tempRekapData = { jadwal: jadwalAktif, rows: rekapRows };
+
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Rekap Presensi Latihan</h2>
+            <p class="text-gray-500 mb-6">Pilih jadwal latihan untuk melihat sekaligus mencetak rekapan presensi seluruh anggota.</p>
+
+            <div class="glass-panel p-5 rounded-2xl mb-6 flex flex-col md:flex-row gap-4 md:items-end">
+                <div class="flex-1">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Jadwal Latihan</label>
+                    <select onchange="gantiRekapJadwal(this.value)" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Jadwal --</option>
+                        ${jadwalSorted.map(j => `<option value="${j.id}" ${j.id === activeJadwalId ? 'selected' : ''}>${formatTanggalIndo(j.tanggal)} - ${j.agenda}</option>`).join('')}
+                    </select>
+                </div>
+                <button onclick="cetakRekapPresensi()" ${!jadwalAktif ? 'disabled' : ''} class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"><i class="fas fa-print mr-2"></i> Cetak Rekap Presensi</button>
+            </div>
+
+            ${!jadwalAktif ? `<p class="text-gray-500 text-center py-10">Belum ada jadwal latihan yang bisa direkap. Buat jadwal terlebih dahulu di menu Jadwal.</p>` : `
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <p class="text-2xl font-black text-gray-800">${anggotaList.length}</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase mt-1">Total Anggota</p>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <p class="text-2xl font-black text-green-600">${totalHadir}</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase mt-1">Hadir</p>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <p class="text-2xl font-black text-red-500">${totalAlpha}</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase mt-1">Tidak Hadir</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="p-3 text-left">No</th>
+                                <th class="p-3 text-left">Nama Anggota</th>
+                                <th class="p-3 text-left">Seksi</th>
+                                <th class="p-3 text-left">Kelas</th>
+                                <th class="p-3 text-left">Jam Masuk</th>
+                                <th class="p-3 text-left">Jam Pulang</th>
+                                <th class="p-3 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rekapRows.map((r, i) => `
+                                <tr class="border-t border-gray-100 ${i % 2 === 1 ? 'bg-gray-50/70' : ''}">
+                                    <td class="p-3">${i + 1}</td>
+                                    <td class="p-3 font-semibold text-gray-800">${r.nama}</td>
+                                    <td class="p-3">${r.seksi}</td>
+                                    <td class="p-3">${r.kelas}</td>
+                                    <td class="p-3">${r.waktuMasuk}</td>
+                                    <td class="p-3">${r.waktuPulang}</td>
+                                    <td class="p-3"><span class="text-xs font-bold px-3 py-1 rounded-full ${r.status === 'Hadir' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${r.status}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            `}
+        `;
+        UI.render(renderLayout('admin', html));
+    }
+
+    window.cetakRekapPresensi = () => {
+        const data = state.tempRekapData;
+        if (!data || !data.jadwal) return UI.alert("Pilih jadwal terlebih dahulu!", "red");
+
+        const { jadwal, rows } = data;
+        const totalHadir = rows.filter(r => r.status === 'Hadir').length;
+        const totalAlpha = rows.length - totalHadir;
+        const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        const printArea = document.getElementById('print-capture-area');
+        printArea.innerHTML = '';
+        printArea.classList.remove('hidden');
+        printArea.classList.add('rekap-mode');
+
+        printArea.innerHTML = `
+            <div class="rekap-print-sheet">
+                <div class="rekap-print-header">
+                    <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';">
+                    <div>
+                        <h1>${appSettings.bandName}</h1>
+                        <h2>REKAPITULASI PRESENSI LATIHAN</h2>
+                    </div>
+                </div>
+                <table class="rekap-print-info">
+                    <tr>
+                        <td style="width:12%;">Agenda</td><td style="width:38%;">: ${jadwal.agenda}</td>
+                        <td style="width:12%;">Tanggal</td><td style="width:38%;">: ${formatTanggalIndo(jadwal.tanggal)}</td>
+                    </tr>
+                    <tr>
+                        <td>Lokasi</td><td>: ${jadwal.lokasi}</td>
+                        <td>Waktu</td><td>: ${jadwal.waktu} WIB</td>
+                    </tr>
+                </table>
+                <table class="rekap-print-table">
+                    <thead>
+                        <tr>
+                            <th>No</th><th>Nama Anggota</th><th>Seksi</th><th>Kelas</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((r, i) => `
+                            <tr>
+                                <td>${i + 1}</td><td>${r.nama}</td><td>${r.seksi}</td><td>${r.kelas}</td>
+                                <td>${r.waktuMasuk}</td><td>${r.waktuPulang}</td><td>${r.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p class="rekap-print-summary">Total Hadir: <strong>${totalHadir}</strong> &nbsp;|&nbsp; Tidak Hadir: <strong>${totalAlpha}</strong> &nbsp;|&nbsp; Total Anggota: <strong>${rows.length}</strong></p>
+                <div class="rekap-print-footer">
+                    <div class="rekap-print-sign">
+                        <p>${appSettings.bandName}, ${tanggalCetak}</p>
+                        <p>Pelatih,</p>
+                        <div class="rekap-print-sign-space"></div>
+                        <p>(..........................................)</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        setTimeout(() => {
+            window.print();
+        }, 150);
+    };
 
     // -- ADMIN: Pengaturan Aplikasi --
     window.simpanPengaturan = async (e) => {
@@ -1773,6 +2027,7 @@ const firebaseConfig = {
         const routes = {
             'admin-dashboard': viewAdminDashboard, 'admin-anggota': viewAdminAnggota, 'admin-cetak': viewAdminCetak, 'admin-scan': viewAdminScan,
             'admin-jadwal': viewAdminJadwal, 'admin-materi': viewAdminMateri, 'admin-pengumuman': viewAdminPengumuman, 'admin-pengaturan': viewAdminPengaturan,
+            'admin-rekap': viewAdminRekapPresensi,
             'user-dashboard': viewUserDashboard, 'user-jadwal': viewUserJadwal, 'user-kehadiran': viewUserKehadiran, 'user-materi': viewUserMateri
         };
         if(routes[viewId]) routes[viewId]();
