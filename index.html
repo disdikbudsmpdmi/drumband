@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Admin Marching Band</title>
+    
+    <!-- PWA Manifest Injection via Data URI -->
+    <script>
+        const manifestJSON = {
+            "name": "Marching Admin",
+            "short_name": "M-Admin",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#3b82f6",
+            "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/3387/3387063.png", "sizes": "512x512", "type": "image/png"}]
+        };
+        const manifestStr = JSON.stringify(manifestJSON);
+        const manifestBlob = new Blob([manifestStr], {type: 'application/json'});
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.write(`<link rel="manifest" href="${manifestUrl}">`);
+    </script>
+
+    <!-- Tailwind CSS, FontAwesome, QRCode.js, HTML5-QRCode, EmailJS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <style>
+        /* FULL PAGE OVERRIDE (Menutupi Layout Blogger) */
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; overflow: hidden; }
+        #app-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; background-color: #f8fafc; overflow-y: auto; }
+        
+        /* Glassmorphism Utilities */
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); }
+        
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* UI Transitions */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Loader */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* CSS KHUSUS PENCETAKAN (PRINT RULES & CR80 STANDARDIZATION) */
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        @media print {
+            /* Sembunyikan seluruh elemen aplikasi utama */
+            body *, #app-container, #app-container * {
+                visibility: hidden !important;
+            }
+            /* Tampilkan area khusus cetak kartu */
+            #print-capture-area, #print-capture-area * {
+                visibility: visible !important;
+            }
+            #print-capture-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 8mm !important;
+                justify-content: center !important;
+                background: white !important;
+            }
+            /* Paksa ukuran fisik kartu CR80 (54 mm x 85.6 mm) */
+            .id-card-print-target {
+                visibility: visible !important;
+                width: 54mm !important;
+                height: 85.6mm !important;
+                min-width: 54mm !important;
+                min-height: 85.6mm !important;
+                padding: 4mm !important;
+                box-sizing: border-box !important;
+                border-radius: 3mm !important;
+                border: 0.5px solid #cbd5e1 !important;
+                background: linear-gradient(to bottom, #1d4ed8, #1e40af, #0f172a) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                position: relative !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                color: white !important;
+                page-break-inside: avoid !important;
+            }
+            /* Pengaturan Skala Font & Gambar khusus print agar muat di 54mm */
+            .id-card-print-target .card-logo {
+                width: 5mm !important;
+                height: 5mm !important;
+            }
+            .id-card-print-target .card-app-title {
+                font-size: 5.5pt !important;
+            }
+            .id-card-print-target .card-header-title {
+                font-size: 7.5pt !important;
+            }
+            .id-card-print-target .card-avatar {
+                width: 15mm !important;
+                height: 15mm !important;
+                margin-bottom: 0.8mm !important;
+            }
+            .id-card-print-target .card-name {
+                font-size: 9pt !important;
+                line-height: 1.1 !important;
+            }
+            .id-card-print-target .card-class {
+                font-size: 6pt !important;
+            }
+            .id-card-print-target .card-seksi {
+                font-size: 6.5pt !important;
+                padding: 0.3mm 3mm !important;
+            }
+            .id-card-print-target .card-qr-container {
+                padding: 1.2mm !important;
+                border-radius: 1.5mm !important;
+            }
+            .id-card-print-target .card-qr-container img, 
+            .id-card-print-target .card-qr-container canvas {
+                width: 17mm !important;
+                height: 17mm !important;
+            }
+            .id-card-print-target .card-footer-id {
+                font-size: 5pt !important;
+                margin-top: 0.8mm !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Area khusus di luar container utama untuk penanganan pencetakan yang bersih -->
+<div id="print-capture-area" class="hidden p-4 flex flex-wrap gap-6 justify-center bg-white"></div>
+
+<div id="app-container" class="text-gray-800">
+    <div id="app-root" class="w-full h-full">
+        <!-- Konten di-render secara dinamis lewat JS -->
+        <div class="flex items-center justify-center h-full"><div class="loader"></div></div>
+    </div>
+</div>
+
+<script type="module">
+    // =========================================================================
+    // 1. KONFIGURASI APLIKASI & SAKLAR DEPLOYMENT
+    // =========================================================================
+    const IS_PREVIEW = false; // Set false JIKA SUDAH TERHUBUNG KE FIREBASE
+
+    // PASTE FIREBASE CONFIG ANDA DI SINI
+const firebaseConfig = {
+  apiKey: "AIzaSyDM1PAt-QYZrfkfSVa3BZAT4apFSf9op-U",
+  authDomain: "pelatihmb.firebaseapp.com",
+  projectId: "pelatihmb",
+  storageBucket: "pelatihmb.firebasestorage.app",
+  messagingSenderId: "556417341306",
+  appId: "1:556417341306:web:b43b0edf508c45079ca8c3"
+};
+
+    // KONFIGURASI EMAILJS (Dapatkan dari emailjs.com)
+    const EMAILJS_PUBLIC_KEY = "sWIg-oOLivuTPimgY";
+    const EMAILJS_SERVICE_ID = "service_7cg19m5";
+    const EMAILJS_TEMPLATE_ID = "template_8qn7ict";
+
+    // =========================================================================
+    // 2. IMPOR & INISIALISASI FIREBASE (Modular)
+    // =========================================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+    let app, auth, db, storage;
+    if (!IS_PREVIEW) {
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app);
+            emailjs.init(EMAILJS_PUBLIC_KEY);
+        } catch(e) { console.error("Firebase init error", e); }
+    }
+
+    // =========================================================================
+    // 3. SERVICE WORKER (PWA - Blob)
+    // =========================================================================
+    const swCode = `
+        const CACHE_NAME = 'marching-v1';
+        self.addEventListener('install', e => { self.skipWaiting(); });
+        self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+        self.addEventListener('fetch', e => {
+            e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+        });
+    `;
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(swUrl).then(() => console.log("PWA Ready")).catch(err => console.log(err));
+    }
+
+    // =========================================================================
+    // 4. STATE MANAGEMENT & DUMMY DATA (Untuk Preview)
+    // =========================================================================
+    let state = {
+        currentUser: null,
+        activeView: 'login-selector',
+        qrScanner: null,
+        isScanning: false,
+        editingAnggotaId: null,
+        tempAnggotaList: [] // Cache data untuk proses cetak
+    };
+
+    // Konfigurasi Pengaturan Aplikasi Default (Dinamis)
+    let appSettings = {
+        appName: "Marching Admin",
+        appIcon: "https://cdn-icons-png.flaticon.com/512/3387/3387063.png",
+        cardTitle: "KARTU ANGGOTA",
+        bandName: "Marching Band"
+    };
+
+    // Mengambil tanggal hari ini secara dinamis (disimulasikan sesuai waktu saat ini untuk data dummy)
+    let mockDB = {
+        seksi: [
+            { id: 's1', nama: 'Brass' },
+            { id: 's2', nama: 'Battery' },
+            { id: 's3', nama: 'Pit/Front Ensemble' },
+            { id: 's4', nama: 'Color Guard' }
+        ],
+        anggota: [
+            { 
+                id: '1', 
+                username: 'user1', 
+                password: '123', 
+                namaLengkap: 'Andi Brass', 
+                seksi: 'Brass', 
+                emailOrangTua: 'ortu.andi@email.com',
+                tempatLahir: 'Dumai',
+                tanggalLahir: '2010-07-12', // Set hari ini (12 Juli) agar memicu pengingat Ultah di dashboard!
+                kelas: 'XI MIPA 2',
+                alamat: 'Jl. Jenderal Sudirman No. 45, Dumai',
+                noWa: '081234567890',
+                namaOrangTua: 'Hendra Wijaya',
+                pekerjaan: 'Wiraswasta',
+                fotoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80'
+            },
+            { 
+                id: '2', 
+                username: 'user2', 
+                password: '123', 
+                namaLengkap: 'Budi Battery', 
+                seksi: 'Battery', 
+                emailOrangTua: 'ortu.budi@email.com',
+                tempatLahir: 'Pekanbaru',
+                tanggalLahir: '2009-11-20',
+                kelas: 'XII IIS 1',
+                alamat: 'Jl. Sukajadi Gg. Damai No. 8, Pekanbaru',
+                noWa: '082345678901',
+                namaOrangTua: 'Bambang Santoso',
+                pekerjaan: 'PNS',
+                fotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'
+            }
+        ],
+        jadwal: [
+            { id: 'j1', tanggal: '2026-07-14', waktu: '15:00', lokasi: 'Lapangan Utama', agenda: 'Latihan Transisi Formasi' } // Jadwal terdekat (14 Juli)
+        ],
+        presensi: [],
+        materi: [
+            { id: 'm1', judul: 'Pemanasan Brass Level 1', targetSeksi: 'Brass', status: 'Sedang Dilatih' }
+        ],
+        pengumuman: [
+            { id: 'p1', tanggal: new Date().toISOString(), judul: 'Selamat Datang', isi: 'Aplikasi siap digunakan untuk seluruh anggota.' }
+        ],
+        pengaturan: [
+            { id: 'global', appName: "Marching Admin", appIcon: "https://cdn-icons-png.flaticon.com/512/3387/3387063.png", cardTitle: "KARTU ANGGOTA", bandName: "Marching Band" }
+        ]
+    };
+
+    // =========================================================================
+    // 5. DATABASE AUTO-SETUP
+    // =========================================================================
+    async function autoSetupDatabase() {
+        if (IS_PREVIEW) return;
+        try {
+            const seksiSnap = await getDocs(collection(db, "seksi"));
+            if (seksiSnap.empty) {
+                console.log("Database kosong, menyiapkan data...");
+                await addDoc(collection(db, "seksi"), { nama: 'Brass' });
+                await addDoc(collection(db, "seksi"), { nama: 'Battery' });
+                await addDoc(collection(db, "seksi"), { nama: 'Pit/Front Ensemble' });
+                await addDoc(collection(db, "seksi"), { nama: 'Color Guard' });
+                
+                // Atur tanggalUltah dummy menyesuaikan waktu riil saat auto setup agar tetap informatif
+                const hariIni = new Date();
+                const dd = String(hariIni.getDate()).padStart(2, '0');
+                const mm = String(hariIni.getMonth() + 1).padStart(2, '0');
+                const yyyy = hariIni.getFullYear() - 15;
+                const ultahHariIni = `${yyyy}-${mm}-${dd}`;
+
+                await addDoc(collection(db, "anggota"), { 
+                    username: 'user1', 
+                    password: '123', 
+                    namaLengkap: 'Andi Brass', 
+                    seksi: 'Brass', 
+                    emailOrangTua: 'ortu.andi@email.com',
+                    tempatLahir: 'Dumai',
+                    tanggalLahir: ultahHariIni, 
+                    kelas: 'XI MIPA 2',
+                    alamat: 'Jl. Jenderal Sudirman No. 45, Dumai',
+                    noWa: '081234567890',
+                    namaOrangTua: 'Hendra Wijaya',
+                    pekerjaan: 'Wiraswasta',
+                    fotoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80'
+                });
+                await addDoc(collection(db, "jadwal"), { tanggal: '2026-07-20', waktu: '15:00', lokasi: 'Lapangan Utama', agenda: 'Latihan Transisi Formasi' });
+                await addDoc(collection(db, "materi"), { judul: 'Pemanasan Brass Level 1', targetSeksi: 'Brass', status: 'Sedang Dilatih' });
+                await addDoc(collection(db, "pengumuman"), { tanggal: new Date().toISOString(), judul: 'Sistem Terinstal', isi: 'Auto Setup Database Berhasil.' });
+                
+                // Set default pengaturan di Firestore
+                await setDoc(doc(db, "pengaturan", "global"), {
+                    appName: appSettings.appName,
+                    appIcon: appSettings.appIcon,
+                    cardTitle: appSettings.cardTitle,
+                    bandName: appSettings.bandName
+                });
+                UI.alert("Database berhasil disiapkan dengan data default!", "green");
+            }
+        } catch(e) { console.error("Auto Setup gagal:", e); }
+    }
+
+    // =========================================================================
+    // 6. FUNGSI UTILITAS & API DB LAYER
+    // =========================================================================
+    const UI = {
+        showLoading: () => document.getElementById('app-root').innerHTML = `<div class="flex items-center justify-center h-full"><div class="loader"></div></div>`,
+        render: (html) => document.getElementById('app-root').innerHTML = html,
+        alert: (msg, type="blue") => {
+            const el = document.createElement('div');
+            el.className = `fixed top-5 left-1/2 transform -translate-x-1/2 bg-${type}-500 text-white px-6 py-3 rounded-full shadow-lg z-[999999] fade-in`;
+            el.innerHTML = `<i class="fas fa-info-circle mr-2"></i> ${msg}`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+    };
+
+    const formatTanggalIndo = (dateStr) => {
+        if (!dateStr) return '-';
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const yr = parts[0];
+            const mo = parseInt(parts[1], 10) - 1;
+            const dy = parseInt(parts[2], 10);
+            if (mo >= 0 && mo < 12) {
+                return `${dy} ${months[mo]} ${yr}`;
+            }
+        }
+        return dateStr;
+    };
+
+    // Fungsi Suara (Text-to-Speech) Bahasa Indonesia Premium Berkarakter Perempuan
+    const speakVoice = (text) => {
+        if ('speechSynthesis' in window) {
+            // Hentikan suara yang sedang berjalan agar tidak tumpang tindih
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID'; // Set bahasa Indonesia
+            
+            // Ambil seluruh daftar suara dari sistem operasi browser
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Prioritaskan suara perempuan bahasa Indonesia (misalnya: Microsoft Gadis, Google Bahasa Indonesia, srikandi, dsb)
+            let femaleVoice = voices.find(v => 
+                (v.lang.startsWith('id') || v.lang.includes('ID')) && 
+                (v.name.toLowerCase().includes('gadis') || 
+                 v.name.toLowerCase().includes('female') || 
+                 v.name.toLowerCase().includes('google') ||
+                 v.name.toLowerCase().includes('srikandi') ||
+                 v.name.toLowerCase().includes('yating') ||
+                 v.name.toLowerCase().includes('kanya'))
+            );
+            
+            // Jika tidak ditemukan suara perempuan spesifik, gunakan suara bahasa Indonesia pertama yang tersedia
+            if (!femaleVoice) {
+                femaleVoice = voices.find(v => v.lang.startsWith('id') || v.name.toLowerCase().includes('indonesia'));
+            }
+            
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+            
+            utterance.pitch = 1.15; // Atur pitch ke 1.15 agar karakter suaranya terdengar lebih feminin, cerah, dan ramah
+            utterance.rate = 1.0;   // Atur kecepatan pelafalan yang natural dan nyaman didengar
+            
+            window.speechSynthesis.speak(utterance);
+        } else {
+            console.warn("Browser ini tidak mendukung umpan balik suara (Speech Synthesis).");
+        }
+    };
+
+    // Pemuatan suara secara asinkronus (untuk beberapa browser seperti Chrome)
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+            console.log("Daftar suara berhasil dimuat.");
+        };
+    }
+
+    const DB = {
+        async get(colName) {
+            if(IS_PREVIEW) return mockDB[colName];
+            const q = query(collection(db, colName));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({id: d.id, ...d.data()}));
+        },
+        async add(colName, data) {
+            if(IS_PREVIEW) { data.id = Date.now().toString(); mockDB[colName].push(data); return data.id; }
+            const docRef = await addDoc(collection(db, colName), data);
+            return docRef.id;
+        },
+        async update(colName, id, data) {
+            if(IS_PREVIEW) {
+                const idx = mockDB[colName].findIndex(x => x.id === id);
+                if(idx > -1) mockDB[colName][idx] = { ...mockDB[colName][idx], ...data };
+                return;
+            }
+            await updateDoc(doc(db, colName, id), data);
+        },
+        async delete(colName, id) {
+            if(IS_PREVIEW) { mockDB[colName] = mockDB[colName].filter(x => x.id !== id); return; }
+            await deleteDoc(doc(db, colName, id));
+        },
+        async getUserPresensi(idAnggota) {
+            if(IS_PREVIEW) return mockDB.presensi.filter(x => x.idAnggota === idAnggota);
+            const q = query(collection(db, "presensi"), where("idAnggota", "==", idAnggota));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({id: d.id, ...d.data()}));
+        },
+        async getPresensiJadwal(idJadwal) {
+            if(IS_PREVIEW) return mockDB.presensi.filter(x => x.idJadwal === idJadwal);
+            const q = query(collection(db, "presensi"), where("idJadwal", "==", idJadwal));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({id: d.id, ...d.data()}));
+        }
+    };
+
+    // Memuat Pengaturan dari DB
+    async function loadSettings() {
+        try {
+            const config = await DB.get('pengaturan');
+            const globalConf = config.find(x => x.id === 'global');
+            if (globalConf) {
+                appSettings.appName = globalConf.appName || appSettings.appName;
+                appSettings.appIcon = globalConf.appIcon || appSettings.appIcon;
+                appSettings.cardTitle = globalConf.cardTitle || appSettings.cardTitle;
+                appSettings.bandName = globalConf.bandName || appSettings.bandName;
+            }
+        } catch(e) {
+            console.error("Gagal load setting:", e);
+        }
+    }
+
+    function sendEmailJS(toEmail, nama, statusWaktu, jam) {
+        if(IS_PREVIEW) { console.log(`[EMAIL PREVIEW] To: ${toEmail} | ${nama} - ${statusWaktu} jam ${jam}`); return; }
+        if(!toEmail || !toEmail.includes('@')) return;
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email: toEmail, nama_anggota: nama, status_presensi: statusWaktu, waktu: jam
+        }).then(() => console.log('Notif Email Terkirim')).catch(e => console.error('Gagal Email:', e));
+    }
+
+    // =========================================================================
+    // 7. ARSITEKTUR UI & ROUTING
+    // =========================================================================
+    const renderLayout = (role, content) => {
+        const menuItems = role === 'admin' ? [
+            { id: 'admin-dashboard', icon: 'fa-home', label: 'Dashboard' },
+            { id: 'admin-anggota', icon: 'fa-users', label: 'Anggota' },
+            { id: 'admin-cetak', icon: 'fa-address-card', label: 'Cetak Kartu' },
+            { id: 'admin-scan', icon: 'fa-qrcode', label: 'Scan Presensi' },
+            { id: 'admin-jadwal', icon: 'fa-calendar-alt', label: 'Jadwal' },
+            { id: 'admin-materi', icon: 'fa-music', label: 'Materi' },
+            { id: 'admin-pengumuman', icon: 'fa-bullhorn', label: 'Info' },
+            { id: 'admin-pengaturan', icon: 'fa-cog', label: 'Pengaturan' }
+        ] : [
+            { id: 'user-dashboard', icon: 'fa-id-card', label: 'My Profile' },
+            { id: 'user-jadwal', icon: 'fa-calendar-alt', label: 'Jadwal' },
+            { id: 'user-kehadiran', icon: 'fa-clock', label: 'Kehadiran' },
+            { id: 'user-materi', icon: 'fa-book', label: 'Materi' }
+        ];
+
+        let navLinks = menuItems.map(m => `
+            <a href="#" onclick="navigate('${m.id}')" class="flex flex-col md:flex-row items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition ${state.activeView === m.id ? 'text-blue-600 bg-blue-50 font-bold' : ''}">
+                <i class="fas ${m.icon} md:mr-3 text-xl md:text-lg mb-1 md:mb-0"></i>
+                <span class="text-xs md:text-base">${m.label}</span>
+            </a>
+        `).join('');
+
+        return `
+            <div class="flex h-full w-full bg-gray-50">
+                <aside class="hidden md:flex flex-col w-64 glass-panel h-full border-r border-gray-200">
+                    <div class="p-6 border-b border-gray-100 text-center">
+                        <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-16 h-16 object-cover rounded-full mx-auto shadow-lg mb-3">
+                        <h2 class="font-bold text-lg text-gray-800">${appSettings.appName}</h2>
+                        <p class="text-xs text-gray-500">${role === 'admin' ? 'Panel Pelatih' : 'Panel Anggota'}</p>
+                    </div>
+                    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">${navLinks}</nav>
+                    <div class="p-4 border-t border-gray-100">
+                        <button onclick="doLogout()" class="w-full py-2 px-4 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-semibold"><i class="fas fa-sign-out-alt mr-2"></i> Keluar</button>
+                    </div>
+                </aside>
+                <main class="flex-1 h-full overflow-y-auto pb-20 md:pb-0 fade-in" id="main-scroll-area">
+                    <div class="md:hidden glass-panel p-4 flex justify-between items-center sticky top-0 z-40">
+                        <h1 class="font-bold text-lg flex items-center">
+                            <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-8 h-8 object-cover rounded-full mr-2"> 
+                            ${role === 'admin' ? 'Pelatih' : 'Anggota'}
+                        </h1>
+                        <button onclick="doLogout()" class="text-red-500 text-xl"><i class="fas fa-sign-out-alt"></i></button>
+                    </div>
+                    <div class="p-4 md:p-8">${content}</div>
+                </main>
+                <nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-gray-200 flex justify-around p-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">${navLinks}</nav>
+            </div>
+        `;
+    }
+
+    // =========================================================================
+    // 8. LOGIC HALAMAN ADMIN (PELATIH)
+    // =========================================================================
+    
+    // -- Fungsi Pendeteksi Update / Notifikasi Global --
+    async function generateDashboardNotifications(isAdminMode, currentUserId = null) {
+        const anggota = await DB.get('anggota');
+        const jadwal = await DB.get('jadwal');
+        const materi = await DB.get('materi');
+
+        const hariIni = new Date();
+        const ddHariIni = String(hariIni.getDate()).padStart(2, '0');
+        const mmHariIni = String(hariIni.getMonth() + 1).padStart(2, '0');
+
+        let notificationsHTML = '';
+
+        // 1. NOTIFIKASI ULANG TAHUN ANGGOTA HARI INI
+        const listUltah = anggota.filter(a => {
+            if (!a.tanggalLahir) return false;
+            const parts = a.tanggalLahir.split('-'); // YYYY-MM-DD
+            if (parts.length === 3) {
+                return parts[1] === mmHariIni && parts[2] === ddHariIni;
+            }
+            return false;
+        });
+
+        if (listUltah.length > 0) {
+            listUltah.forEach(a => {
+                const isSaya = !isAdminMode && a.id === currentUserId;
+                const pesanUltah = isSaya 
+                    ? `Selamat Ulang Tahun yang luar biasa untuk kamu! 🥳 Tiup lilin dan teruslah berkarya bersama ${appSettings.bandName}!` 
+                    : `Hari ini <strong>${a.namaLengkap}</strong> (${a.seksi}) sedang berulang tahun! Mari berikan ucapan terbaik kita! 🎉`;
+
+                notificationsHTML += `
+                    <div class="glass p-4 rounded-2xl border-l-4 border-pink-500 flex items-start gap-3 shadow-sm fade-in mb-4">
+                        <div class="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
+                            <i class="fas fa-birthday-cake text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 text-sm">Ada yang Berulang Tahun! 🎂</h4>
+                            <p class="text-xs text-gray-600 mt-1">${pesanUltah}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. NOTIFIKASI UPDATE JADWAL TERDEKAT (Dalam 3 Hari Ke Depan)
+        const jadwalTerdekat = jadwal.filter(j => {
+            if (!j.tanggal) return false;
+            const tglJadwal = new Date(j.tanggal);
+            const selisihWaktu = tglJadwal.getTime() - hariIni.getTime();
+            const selisihHari = Math.ceil(selisihWaktu / (1000 * 3600 * 24));
+            return selisihHari >= 0 && selisihHari <= 3;
+        });
+
+        if (jadwalTerdekat.length > 0) {
+            jadwalTerdekat.forEach(j => {
+                notificationsHTML += `
+                    <div class="glass p-4 rounded-2xl border-l-4 border-amber-500 flex items-start gap-3 shadow-sm fade-in mb-4">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                            <i class="fas fa-exclamation-triangle text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 text-sm">Latihan Penting Mendatang! 📅</h4>
+                            <p class="text-xs text-gray-600 mt-1">Agenda <strong>"${j.agenda}"</strong> dijadwalkan pada <strong>${formatTanggalIndo(j.tanggal)}</strong> pukul ${j.waktu} WIB di ${j.lokasi}. Siapkan fisik dan instrumen kalian!</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 3. NOTIFIKASI UPDATE MATERI TERBARU (Terbaca jika materi baru ditambahkan/belum selesai dilatih)
+        const materiTerbaru = materi.filter(m => m.status === 'Sedang Dilatih');
+        if (materiTerbaru.length > 0) {
+            materiTerbaru.slice(-2).forEach(m => {
+                notificationsHTML += `
+                    <div class="glass p-4 rounded-2xl border-l-4 border-indigo-500 flex items-start gap-3 shadow-sm fade-in mb-4">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                            <i class="fas fa-music text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 text-sm">Materi Latihan Sedang Berjalan! 🎵</h4>
+                            <p class="text-xs text-gray-600 mt-1">Repertoar <strong>"${m.judul}"</strong> untuk target seksi <strong>${m.targetSeksi}</strong> sedang aktif dilatih. ${m.fileUrl ? 'Segera unduh partiturnya!' : 'Silakan hubungi seksi masing-masing.'}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        return notificationsHTML || `
+            <div class="p-4 text-center text-gray-400 italic text-xs">
+                <i class="fas fa-bell-slash mb-1 block text-lg"></i> Tidak ada pemberitahuan atau pembaruan hari ini.
+            </div>
+        `;
+    }
+
+    // -- Admin: Dashboard --
+    async function viewAdminDashboard() {
+        UI.showLoading();
+        const anggota = await DB.get('anggota');
+        const jadwal = await DB.get('jadwal');
+        const notifHTML = await generateDashboardNotifications(true);
+        
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Pelatih</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Sisi Kiri: Angka Statistik -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-blue-500">
+                            <p class="text-gray-500 text-sm font-semibold">Total Anggota Terdaftar</p>
+                            <p class="text-3xl font-extrabold text-gray-800 mt-1">${anggota.length} Personel</p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-green-500">
+                            <p class="text-gray-500 text-sm font-semibold">Agenda Latihan</p>
+                            <p class="text-3xl font-extrabold text-gray-800 mt-1">${jadwal.length} Jadwal</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl border border-gray-100">
+                        <h3 class="font-bold mb-4 text-gray-800"><i class="far fa-calendar-alt text-blue-500 mr-1"></i> Agenda Terdekat</h3>
+                        ${jadwal.length === 0 ? '<p class="text-gray-500">Belum ada jadwal.</p>' : jadwal.slice(-3).map(j => `
+                            <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                <div>
+                                    <p class="font-bold text-gray-800">${j.agenda}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5"><i class="fas fa-calendar mr-1"></i> ${formatTanggalIndo(j.tanggal)} - ${j.waktu} WIB</p>
+                                </div>
+                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">${j.lokasi}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Sisi Kanan: Notifikasi Center -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-100 h-fit">
+                    <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bell text-blue-500 mr-1 animate-bounce"></i> Pemberitahuan Hari Ini</h3>
+                    <div class="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                        ${notifHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+        UI.render(renderLayout('admin', html));
+    }
+
+    // -- ADMIN: Kelola Anggota & Seksi --
+    window.bukaModalSeksi = () => {
+        const modal = document.createElement('div');
+        modal.id = 'modal-seksi';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999] fade-in px-4';
+        modal.innerHTML = `
+            <div class="bg-white p-6 rounded-2xl max-w-sm w-full">
+                <h3 class="font-bold text-lg mb-4 text-gray-800">Tambah Seksi Baru</h3>
+                <input type="text" id="newSeksiName" class="w-full p-3 border border-gray-300 rounded-lg mb-4 outline-none focus:border-blue-500" placeholder="Nama Seksi (mis: Visual, dll)">
+                <div class="flex justify-end gap-2">
+                    <button onclick="document.getElementById('modal-seksi').remove()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Batal</button>
+                    <button onclick="simpanSeksiBaru()" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">Simpan</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    };
+
+    window.simpanSeksiBaru = async () => {
+        const val = document.getElementById('newSeksiName').value.trim();
+        if(!val) return;
+        await DB.add('seksi', { nama: val });
+        document.getElementById('modal-seksi').remove();
+        UI.alert("Seksi baru ditambahkan!", "green");
+        if(state.activeView === 'admin-anggota') viewAdminAnggota();
+        if(state.activeView === 'admin-materi') viewAdminMateri();
+    };
+
+    window.bukaDetailAnggota = async (id) => {
+        const anggotaList = await DB.get('anggota');
+        const a = anggotaList.find(x => x.id === id);
+        if (!a) return;
+
+        const modal = document.createElement('div');
+        modal.id = 'modal-detail-anggota';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999] fade-in px-4 overflow-y-auto py-8';
+        modal.innerHTML = `
+            <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative">
+                <!-- Cover Header -->
+                <div class="h-28 bg-gradient-to-r from-blue-600 to-indigo-800 relative">
+                    <button onclick="document.getElementById('modal-detail-anggota').remove()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white w-8 h-8 rounded-full flex items-center justify-center transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Avatar & Identitas Singkat -->
+                <div class="px-6 pb-6 relative">
+                    <div class="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-12 mb-6">
+                        <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-24 h-24 object-cover rounded-full border-4 border-white shadow-md bg-white">
+                        <div class="text-center sm:text-left">
+                            <h3 class="font-extrabold text-2xl text-gray-800">${a.namaLengkap}</h3>
+                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${a.seksi}</span>
+                        </div>
+                    </div>
+
+                    <!-- Informasi Detail -->
+                    <div class="space-y-4 border-t border-gray-100 pt-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">Tempat Lahir</p>
+                                <p class="text-sm font-semibold text-gray-700 mt-0.5">${a.tempatLahir || '-'}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">Tanggal Lahir</p>
+                                <p class="text-sm font-semibold text-gray-700 mt-0.5">${formatTanggalIndo(a.tanggalLahir)}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">Kelas</p>
+                                <p class="text-sm font-semibold text-gray-700 mt-0.5">${a.kelas || '-'}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">No. WhatsApp</p>
+                                <p class="text-sm font-semibold text-blue-600 mt-0.5 hover:underline">
+                                    <a href="https://wa.me/${a.noWa ? a.noWa.replace(/[^0-9]/g, '') : ''}" target="_blank"><i class="fab fa-whatsapp mr-1"></i> ${a.noWa || '-'}</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-bold text-gray-400 uppercase">Alamat Rumah</p>
+                            <p class="text-sm font-semibold text-gray-700 mt-0.5">${a.alamat || '-'}</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">Username Login</p>
+                                <p class="text-sm font-mono text-gray-700 mt-0.5">${a.username}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-2xl space-y-3">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider"><i class="fas fa-user-friends mr-1"></i> Data Orang Tua / Wali</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Nama Lengkap</p>
+                                    <p class="text-xs font-semibold text-gray-700 mt-0.5">${a.namaOrangTua || '-'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Pekerjaan</p>
+                                    <p class="text-xs font-semibold text-gray-700 mt-0.5">${a.pekerjaan || '-'}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">Email (Untuk Notifikasi)</p>
+                                <p class="text-xs font-semibold text-gray-700 mt-0.5">${a.emailOrangTua || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    };
+
+    window.bukaModalTambahAnggota = () => {
+        state.editingAnggotaId = null;
+        document.getElementById('modal-anggota-form').classList.remove('hidden');
+        
+        // Reset formulir
+        const formEl = document.getElementById('form-anggota-el');
+        if (formEl) formEl.reset();
+
+        // Atur UI formulir ke mode Tambah (Biru)
+        const formTitle = document.getElementById('form-anggota-title');
+        formTitle.innerText = "Tambah Anggota Baru";
+        formTitle.className = "font-bold text-xl mb-4 text-gray-800";
+        
+        const btnSubmit = document.getElementById('btn-submit-anggota');
+        btnSubmit.innerText = "Simpan Anggota";
+        btnSubmit.className = "flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition";
+    };
+
+    window.tutupModalAnggota = () => {
+        document.getElementById('modal-anggota-form').classList.add('hidden');
+        state.editingAnggotaId = null;
+    };
+
+    window.cariAnggota = () => {
+        const query = document.getElementById('searchAnggota').value.toLowerCase();
+        const cards = document.querySelectorAll('.anggota-card');
+        cards.forEach(card => {
+            const nama = card.getAttribute('data-nama').toLowerCase();
+            const seksi = card.getAttribute('data-seksi').toLowerCase();
+            if (nama.includes(query) || seksi.includes(query)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    };
+
+    window.editAnggota = async (id) => {
+        const anggota = (await DB.get('anggota')).find(a => a.id === id);
+        if(!anggota) return;
+        
+        state.editingAnggotaId = id;
+        
+        // Tampilkan modal pop-up formulir terlebih dahulu
+        document.getElementById('modal-anggota-form').classList.remove('hidden');
+        
+        // Isi form dengan data yang sudah ada
+        document.querySelector('input[name="nama"]').value = anggota.namaLengkap;
+        document.querySelector('input[name="tempatLahir"]').value = anggota.tempatLahir || '';
+        document.querySelector('input[name="tanggalLahir"]').value = anggota.tanggalLahir || '';
+        document.querySelector('input[name="kelas"]').value = anggota.kelas || '';
+        document.querySelector('input[name="alamat"]').value = anggota.alamat || '';
+        document.querySelector('input[name="noWa"]').value = anggota.noWa || '';
+        document.querySelector('input[name="namaOrangTua"]').value = anggota.namaOrangTua || '';
+        document.querySelector('input[name="pekerjaan"]').value = anggota.pekerjaan || '';
+        document.querySelector('input[name="email"]').value = anggota.emailOrangTua || '';
+        document.querySelector('select[name="seksi"]').value = anggota.seksi;
+        document.querySelector('input[name="fotoUrl"]').value = anggota.fotoUrl || '';
+        document.querySelector('input[name="username"]').value = anggota.username;
+        document.querySelector('input[name="password"]').value = anggota.password;
+        
+        // Ubah Tampilan Formulir ke mode Update (Hijau)
+        const formTitle = document.getElementById('form-anggota-title');
+        formTitle.innerText = "Update Data Anggota";
+        formTitle.className = "font-bold text-xl mb-4 text-green-600";
+        
+        const btnSubmit = document.getElementById('btn-submit-anggota');
+        btnSubmit.innerText = "Simpan Perubahan";
+        btnSubmit.className = "flex-1 bg-green-600 text-white font-bold py-3.5 rounded-xl hover:bg-green-700 transition";
+    };
+
+    window.simpanAnggota = async (e) => {
+        e.preventDefault();
+        const data = {
+            namaLengkap: e.target.nama.value,
+            tempatLahir: e.target.tempatLahir.value,
+            tanggalLahir: e.target.tanggalLahir.value,
+            kelas: e.target.kelas.value,
+            alamat: e.target.alamat.value,
+            noWa: e.target.noWa.value,
+            namaOrangTua: e.target.namaOrangTua.value,
+            pekerjaan: e.target.pekerjaan.value,
+            emailOrangTua: e.target.email.value,
+            seksi: e.target.seksi.value,
+            fotoUrl: e.target.fotoUrl.value,
+            username: e.target.username.value,
+            password: e.target.password.value
+        };
+        
+        if (state.editingAnggotaId) {
+            await DB.update('anggota', state.editingAnggotaId, data);
+            UI.alert("Data Anggota berhasil diperbarui!", "green");
+            state.editingAnggotaId = null;
+        } else {
+            await DB.add('anggota', data);
+            UI.alert("Anggota berhasil ditambahkan!", "green");
+        }
+        
+        // Tutup modal form setelah sukses menyimpan
+        document.getElementById('modal-anggota-form').classList.add('hidden');
+        viewAdminAnggota();
+    };
+
+    window.hapusAnggota = async (id) => {
+        if(confirm("Hapus anggota ini secara permanen?")) { await DB.delete('anggota', id); viewAdminAnggota(); }
+    };
+
+    async function viewAdminAnggota() {
+        UI.showLoading();
+        const anggota = await DB.get('anggota');
+        const seksiList = await DB.get('seksi');
+        
+        // Modal Pop Up Form Tambah/Edit Anggota
+        let modalFormHTML = `
+            <div id="modal-anggota-form" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999] fade-in px-4 overflow-y-auto py-8">
+                <div class="bg-white p-6 rounded-3xl max-w-2xl w-full shadow-2xl relative">
+                    <button onclick="tutupModalAnggota()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl transition"><i class="fas fa-times"></i></button>
+                    <h3 id="form-anggota-title" class="font-bold text-xl mb-4 text-gray-800">Tambah Anggota Baru</h3>
+                    
+                    <form id="form-anggota-el" onsubmit="simpanAnggota(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto p-1">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Lengkap</label>
+                            <input required type="text" name="nama" placeholder="Nama Lengkap" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tempat Lahir</label>
+                                <input required type="text" name="tempatLahir" placeholder="Kota Lahir" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal Lahir</label>
+                                <input required type="date" name="tanggalLahir" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kelas</label>
+                            <input required type="text" name="kelas" placeholder="Contoh: XI MIPA 2" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Alamat Lengkap</label>
+                            <input required type="text" name="alamat" placeholder="Alamat Rumah" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">No. WhatsApp</label>
+                            <input required type="tel" name="noWa" placeholder="Contoh: 081234567890" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seksi</label>
+                            <div class="flex gap-2">
+                                <select required name="seksi" class="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                                    <option value="">-- Pilih Seksi --</option>
+                                    ${seksiList.map(s => `<option value="${s.nama}">${s.nama}</option>`).join('')}
+                                </select>
+                                <button type="button" onclick="bukaModalSeksi()" class="bg-gray-200 text-gray-700 px-4 rounded-lg font-bold hover:bg-gray-300 transition" title="Tambah Seksi Baru"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2 border-t border-gray-100 pt-3 mt-1">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="fas fa-user-friends mr-1"></i> Data Orang Tua / Wali</h4>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Orang Tua / Wali</label>
+                            <input required type="text" name="namaOrangTua" placeholder="Nama Ibu/Ayah/Wali" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pekerjaan Orang Tua / Wali</label>
+                            <input required type="text" name="pekerjaan" placeholder="Contoh: PNS, Wiraswasta" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Orang Tua (Untuk Notifikasi Presensi)</label>
+                            <input required type="email" name="email" placeholder="contoh@email.com" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+
+                        <div class="md:col-span-2 border-t border-gray-100 pt-3 mt-1">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="fas fa-user-cog mr-1"></i> Pengaturan Akun & Media</h4>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL Foto Profil Anggota (Gambar Web)</label>
+                            <input type="url" name="fotoUrl" placeholder="https://link-foto-anda.com/gambar.jpg" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username Login</label>
+                            <input required type="text" name="username" placeholder="Username" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password Login</label>
+                            <input required type="text" name="password" placeholder="Password" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        
+                        <div class="md:col-span-2 flex gap-3 mt-4">
+                            <button type="submit" id="btn-submit-anggota" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition">Simpan Anggota</button>
+                            <button type="button" onclick="tutupModalAnggota()" class="bg-gray-400 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-gray-500 transition">Batal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        // Bilah Pencarian & Tombol Cetak/Tambah Kartu
+        let searchHeaderHTML = `
+            <div class="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
+                <div class="relative w-full md:w-96">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </span>
+                    <input type="text" id="searchAnggota" oninput="cariAnggota()" placeholder="Cari nama atau seksi..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-gray-200 outline-none focus:border-blue-500 shadow-sm transition">
+                </div>
+                <button onclick="bukaModalTambahAnggota()" class="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center justify-center gap-2">
+                    <i class="fas fa-plus"></i> Tambah Anggota
+                </button>
+            </div>
+        `;
+
+        let gridListHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="anggota-grid-container">
+                ${anggota.map(a => `
+                    <div class="anggota-card glass-panel p-5 rounded-3xl border border-gray-200 flex items-center justify-between shadow-sm hover:shadow-md transition" data-nama="${a.namaLengkap}" data-seksi="${a.seksi}">
+                        <div class="flex items-center gap-4">
+                            <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-16 h-16 object-cover rounded-full shadow-sm bg-white border-2 border-blue-100">
+                            <div>
+                                <h4 class="font-extrabold text-lg text-gray-800">${a.namaLengkap}</h4>
+                                <div class="flex gap-2 items-center mt-1">
+                                    <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${a.seksi}</span>
+                                    <span class="text-xs text-gray-400 font-semibold">${a.kelas}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="bukaDetailAnggota('${a.id}')" class="text-blue-600 bg-blue-50 w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Lihat Profil Lengkap"><i class="fas fa-eye"></i></button>
+                            <div class="flex gap-1.5">
+                                <button onclick="editAnggota('${a.id}')" class="text-yellow-500 bg-yellow-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-yellow-500 hover:text-white transition" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button onclick="hapusAnggota('${a.id}')" class="text-red-500 bg-red-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition" title="Hapus"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('admin', `<h2 class="text-2xl font-bold text-gray-800 mb-6">Kelola Anggota & Seksi</h2>` + searchHeaderHTML + gridListHTML + modalFormHTML));
+    }
+
+    // -- ADMIN: Cetak Kartu Anggota --
+    window.printSatuKartu = (idAnggota) => {
+        const list = state.tempAnggotaList || [];
+        const a = list.find(x => x.id === idAnggota);
+        if (!a) return;
+
+        const printArea = document.getElementById('print-capture-area');
+        printArea.innerHTML = '';
+        printArea.classList.remove('hidden');
+
+        // Bikin container kartu khusus print
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'id-card-print-target';
+        cardWrapper.innerHTML = `
+            <!-- Aksen hiasan latar belakang -->
+            <div style="position: absolute; right: -40px; top: -40px; width: 80px; height: 80px; background: rgba(59, 130, 246, 0.25); border-radius: 9999px; filter: blur(8px);"></div>
+            <div style="position: absolute; left: -40px; bottom: -40px; width: 90px; height: 90px; background: rgba(129, 140, 248, 0.3); border-radius: 9999px; filter: blur(8px);"></div>
+
+            <!-- Header Kartu -->
+            <div class="text-center w-full relative z-10">
+                <div class="flex items-center justify-center gap-1">
+                    <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="card-logo" style="object-fit: cover; border-radius: 9999px;">
+                    <span class="card-app-title uppercase tracking-widest text-blue-200 font-bold">${appSettings.bandName}</span>
+                </div>
+                <h4 class="card-header-title font-black uppercase tracking-wider text-white" style="margin: 0.5mm 0 0 0;">${appSettings.cardTitle}</h4>
+                <div style="width: 12mm; height: 0.6mm; background-color: #facc15; margin: 0.8mm auto 0 auto; border-radius: 9999px;"></div>
+            </div>
+
+            <!-- Profil Tengah -->
+            <div class="text-center w-full relative z-10 flex flex-col items-center">
+                <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="card-avatar" style="object-fit: cover; border: 1.5px solid #facc15; background-color: white;">
+                <p style="font-size: 4pt; text-transform: uppercase; tracking-wider; color: #93c5fd; font-weight: 600; margin: 0;">Nama Anggota</p>
+                <h3 class="card-name font-extrabold text-white" style="margin: 0.2mm 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-w: 46mm;">${a.namaLengkap}</h3>
+                <p class="card-class text-gray-300" style="margin: 0;">Kelas: ${a.kelas || '-'}</p>
+                <span class="card-seksi bg-yellow-400 text-indigo-950 font-black rounded-full inline-block uppercase tracking-wider">${a.seksi}</span>
+            </div>
+
+            <!-- QR Code Area -->
+            <div class="flex flex-col items-center justify-center w-full relative z-10">
+                <div class="card-qr-container bg-white flex items-center justify-center" style="border: 1px solid #facc15;">
+                    <div id="print-qr-single" class="flex justify-center items-center"></div>
+                </div>
+                <p class="card-footer-id text-blue-300 font-mono uppercase tracking-widest" style="margin: 0.8mm 0 0 0;">ID: ${a.username}</p>
+            </div>
+        `;
+
+        printArea.appendChild(cardWrapper);
+
+        // Langsung generate QR Code fisik baru dengan ukuran pas
+        new window.QRCode(document.getElementById('print-qr-single'), {
+            text: a.username,
+            width: 64, 
+            height: 64,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: window.QRCode.CorrectLevel.H
+        });
+
+        // Trigger Jendela Cetak Browser
+        setTimeout(() => {
+            window.print();
+        }, 150);
+    };
+
+    window.printSemuaKartu = () => {
+        const list = state.tempAnggotaList || [];
+        if (list.length === 0) return UI.alert("Tidak ada anggota untuk dicetak", "red");
+
+        const printArea = document.getElementById('print-capture-area');
+        printArea.innerHTML = '';
+        printArea.classList.remove('hidden');
+
+        // Bikin semua struktur kartu sekaligus
+        list.forEach((a, index) => {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'id-card-print-target';
+            cardWrapper.innerHTML = `
+                <div style="position: absolute; right: -40px; top: -40px; width: 80px; height: 80px; background: rgba(59, 130, 246, 0.25); border-radius: 9999px; filter: blur(8px);"></div>
+                <div style="position: absolute; left: -40px; bottom: -40px; width: 90px; height: 90px; background: rgba(129, 140, 248, 0.3); border-radius: 9999px; filter: blur(8px);"></div>
+
+                <!-- Header Kartu -->
+                <div class="text-center w-full relative z-10">
+                    <div class="flex items-center justify-center gap-1">
+                        <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="card-logo" style="object-fit: cover; border-radius: 9999px;">
+                        <span class="card-app-title uppercase tracking-widest text-blue-200 font-bold">${appSettings.bandName}</span>
+                    </div>
+                    <h4 class="card-header-title font-black uppercase tracking-wider text-white" style="margin: 0.5mm 0 0 0;">${appSettings.cardTitle}</h4>
+                    <div style="width: 12mm; height: 0.6mm; background-color: #facc15; margin: 0.8mm auto 0 auto; border-radius: 9999px;"></div>
+                </div>
+
+                <!-- Profil Tengah -->
+                <div class="text-center w-full relative z-10 flex flex-col items-center">
+                    <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="card-avatar" style="object-fit: cover; border: 1.5px solid #facc15; background-color: white;">
+                    <p style="font-size: 4pt; text-transform: uppercase; tracking-wider; color: #93c5fd; font-weight: 600; margin: 0;">Nama Anggota</p>
+                    <h3 class="card-name font-extrabold text-white" style="margin: 0.2mm 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-w: 46mm;">${a.namaLengkap}</h3>
+                    <p class="card-class text-gray-300" style="margin: 0;">Kelas: ${a.kelas || '-'}</p>
+                    <span class="card-seksi bg-yellow-400 text-indigo-950 font-black rounded-full inline-block uppercase tracking-wider">${a.seksi}</span>
+                </div>
+
+                <!-- QR Code Area -->
+                <div class="flex flex-col items-center justify-center w-full relative z-10">
+                    <div class="card-qr-container bg-white flex items-center justify-center" style="border: 1px solid #facc15;">
+                        <div id="print-qr-bulk-${index}" class="flex justify-center items-center"></div>
+                    </div>
+                    <p class="card-footer-id text-blue-300 font-mono uppercase tracking-widest" style="margin: 0.8mm 0 0 0;">ID: ${a.username}</p>
+                </div>
+            `;
+            printArea.appendChild(cardWrapper);
+        });
+
+        // Bikin semua QR Code fisik secara terpisah demi keakuratan tinggi
+        setTimeout(() => {
+            list.forEach((a, index) => {
+                const container = document.getElementById(`print-qr-bulk-${index}`);
+                if (container) {
+                    new window.QRCode(container, {
+                        text: a.username,
+                        width: 64,
+                        height: 64,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: window.QRCode.CorrectLevel.H
+                    });
+                }
+            });
+
+            // Trigger Jendela Cetak Massal
+            setTimeout(() => {
+                window.print();
+            }, 200);
+        }, 100);
+    };
+
+    async function viewAdminCetak() {
+        UI.showLoading();
+        const anggota = await DB.get('anggota');
+        state.tempAnggotaList = anggota; // Simpan ke cache pencetakan
+        
+        let cardListHTML = '';
+        
+        if (anggota.length === 0) {
+            cardListHTML = `<p class="text-gray-500 text-center py-10">Belum ada data anggota untuk dicetak.</p>`;
+        } else {
+            cardListHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <p class="text-gray-600">Total Kartu Tersedia: <span class="font-bold">${anggota.length}</span></p>
+                    <button onclick="printSemuaKartu()" class="bg-blue-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-blue-700 transition shadow-sm"><i class="fas fa-print mr-2"></i> Cetak Semua Kartu</button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    ${anggota.map(a => `
+                        <div class="glass-panel p-4 rounded-3xl border border-gray-100 flex flex-col items-center">
+                            
+                            <!-- Template ID Card (Visual Preview di Layar Komputer) -->
+                            <div id="card-print-container-${a.id}" class="card-print-source w-full max-w-[320px]">
+                                <div class="w-full h-[460px] bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-950 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border-4 border-white">
+                                    
+                                    <div class="absolute -right-16 -top-16 w-36 h-36 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+                                    <div class="absolute -left-16 -bottom-16 w-40 h-40 bg-indigo-400 rounded-full opacity-25 blur-xl"></div>
+                                    
+                                    <!-- Bagian Atas Kartu -->
+                                    <div class="text-center relative z-10">
+                                        <div class="flex items-center justify-center gap-2 mb-1">
+                                            <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-6 h-6 object-cover rounded-full">
+                                            <span class="text-xs font-bold uppercase tracking-widest text-blue-200">${appSettings.bandName}</span>
+                                        </div>
+                                        <h4 class="text-sm font-black uppercase tracking-wider text-white">${appSettings.cardTitle}</h4>
+                                        <div class="w-12 h-1 bg-yellow-400 mx-auto mt-2 rounded-full"></div>
+                                    </div>
+
+                                    <!-- Bagian Tengah Kartu -->
+                                    <div class="text-center my-auto relative z-10 py-2 flex flex-col items-center">
+                                        <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-16 h-16 object-cover rounded-full border-2 border-yellow-400 mb-2 shadow-md bg-white">
+                                        <p class="text-[10px] uppercase tracking-wider text-blue-200 font-semibold mb-0.5">Nama Anggota</p>
+                                        <h3 class="text-lg font-extrabold text-white mb-1 tracking-wide truncate px-2 max-w-[280px]">${a.namaLengkap}</h3>
+                                        <p class="text-[10px] text-gray-300 font-semibold mb-2">Kelas: ${a.kelas || '-'}</p>
+                                        <span class="bg-yellow-400 text-indigo-950 text-xs font-black px-4 py-1 rounded-full shadow-md inline-block uppercase tracking-wider">${a.seksi}</span>
+                                    </div>
+
+                                    <!-- Bagian Bawah Kartu -->
+                                    <div class="flex flex-col items-center justify-center relative z-10">
+                                        <div class="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-yellow-400">
+                                            <div id="qrcode-print-${a.id}" class="flex justify-center"></div>
+                                        </div>
+                                        <p class="text-[10px] text-blue-300 font-mono mt-3 uppercase tracking-widest">ID: ${a.username}</p>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                            <!-- Tombol Aksi Cetak Per Kartu -->
+                            <div class="w-full max-w-[320px] mt-4 flex gap-2">
+                                <button onclick="printSatuKartu('${a.id}')" class="btn-no-print w-full bg-gray-100 text-gray-700 py-2.5 px-4 rounded-xl hover:bg-gray-200 transition font-bold text-sm"><i class="fas fa-print mr-2"></i> Cetak Kartu Ini</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Cetak Kartu Anggota</h2>
+            <p class="text-gray-500 mb-6">Cetak kartu ID anggota lengkap dengan QR Code yang dapat langsung di-scan oleh pelatih saat latihan.</p>
+            ${cardListHTML}
+        `;
+        
+        UI.render(renderLayout('admin', html));
+
+        // Generate QR Code pratinjau layar (bukan cetak)
+        setTimeout(() => {
+            anggota.forEach(a => {
+                const qrContainer = document.getElementById('qrcode-print-' + a.id);
+                if (qrContainer) {
+                    new window.QRCode(qrContainer, {
+                        text: a.username,
+                        width: 80,
+                        height: 80,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff",
+                        correctLevel : window.QRCode.CorrectLevel.H
+                    });
+                }
+            });
+        }, 400);
+    }
+
+    // -- ADMIN: Pengaturan Aplikasi --
+    window.simpanPengaturan = async (e) => {
+        e.preventDefault();
+        const data = {
+            appName: e.target.appName.value.trim(),
+            appIcon: e.target.appIcon.value.trim(),
+            cardTitle: e.target.cardTitle.value.trim(),
+            bandName: e.target.bandName.value.trim()
+        };
+        
+        try {
+            if (IS_PREVIEW) {
+                const idx = mockDB.pengaturan.findIndex(x => x.id === 'global');
+                if (idx > -1) mockDB.pengaturan[idx] = { ...mockDB.pengaturan[idx], ...data };
+                else mockDB.pengaturan.push({ id: 'global', ...data });
+            } else {
+                await setDoc(doc(db, "pengaturan", "global"), data, { merge: true });
+            }
+            // Update state lokal instan
+            appSettings = { ...appSettings, ...data };
+            UI.alert("Pengaturan Berhasil Diperbarui!", "green");
+            viewAdminPengaturan();
+        } catch(err) {
+            console.error(err);
+            UI.alert("Gagal memperbarui pengaturan", "red");
+        }
+    };
+
+    async function viewAdminPengaturan() {
+        UI.showLoading();
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Pengaturan Aplikasi</h2>
+            <p class="text-gray-500 mb-6">Ubah identitas sistem, logo, serta kustomisasi ID Card anggota secara dinamis.</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Form Kustomisasi -->
+                <div class="lg:col-span-2 glass-panel p-6 rounded-3xl border border-gray-100">
+                    <form onsubmit="simpanPengaturan(event)" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Nama Aplikasi / Sistem</label>
+                            <input required type="text" name="appName" value="${appSettings.appName}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="text-xs text-gray-400 mt-1">Nama ini akan tampil di menu utama, tab browser, dan dashboard.</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">URL Logo / Icon Aplikasi</label>
+                            <input required type="url" name="appIcon" value="${appSettings.appIcon}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="text-xs text-gray-400 mt-1">Masukkan URL gambar logo berformat PNG/JPG. Disarankan rasio 1:1.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Nama Grup Marching Band</label>
+                                <input required type="text" name="bandName" value="${appSettings.bandName}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">Tampil di baris atas ID Card.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Judul Dokumen ID Card</label>
+                                <input required type="text" name="cardTitle" value="${appSettings.cardTitle}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">Judul kartu (Contoh: KARTU ANGGOTA, ID CARD, LENCANA).</p>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-md"><i class="fas fa-save mr-2"></i> Simpan Perubahan</button>
+                    </form>
+                </div>
+
+                <!-- Live Preview Visual -->
+                <div class="glass-panel p-6 rounded-3xl border border-gray-100 flex flex-col items-center justify-center text-center bg-gradient-to-b from-blue-50 to-white">
+                    <h3 class="font-bold text-gray-700 mb-4 uppercase tracking-wider text-xs">Pratinjau Logo Saat Ini</h3>
+                    <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-24 h-24 object-cover rounded-full shadow-lg border-4 border-white mb-4">
+                    <h4 class="font-bold text-lg text-gray-800">${appSettings.appName}</h4>
+                    <p class="text-xs text-gray-500 mt-1">Identitas grup: <span class="font-semibold text-blue-600">${appSettings.bandName}</span></p>
+                </div>
+            </div>
+        `;
+        UI.render(renderLayout('admin', html));
+    }
+
+    // -- Admin: Scan Presensi QR --
+    async function initScanner() {
+        const scannerConfig = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+        state.qrScanner = new Html5Qrcode("reader");
+        let isProcessing = false;
+        
+        document.getElementById('startScanBtn').onclick = () => {
+            const idJadwal = document.getElementById('scanJadwalId').value;
+            const jenisScan = document.getElementById('scanJenis').value;
+            if(!idJadwal) return UI.alert("Pilih jadwal terlebih dahulu!", "red");
+            
+            document.getElementById('scanner-ui').classList.remove('hidden');
+            if (state.isScanning) return;
+            
+            state.qrScanner.start({ facingMode: "environment" }, scannerConfig, async (decodedText) => {
+                if(isProcessing) return;
+                isProcessing = true;
+                
+                const anggotaList = await DB.get('anggota');
+                const anggota = anggotaList.find(a => a.username === decodedText);
+                
+                if(anggota) {
+                    UI.alert(`Sukses Scan: ${anggota.namaLengkap} (${jenisScan})`, "green");
+                    const jamS = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                    let dataPresensi = { idJadwal: idJadwal, idAnggota: anggota.id, namaLengkap: anggota.namaLengkap };
+                    if(jenisScan === 'Masuk') { 
+                        dataPresensi.waktuMasuk = jamS; 
+                        dataPresensi.status = "Hadir"; 
+                    } else { 
+                        dataPresensi.waktuPulang = jamS; 
+                    }
+                    await DB.add('presensi', dataPresensi);
+                    
+                    // Mainkan Umpan Balik Suara (Text-to-Speech) Berbahasa Indonesia (Suara Perempuan)
+                    const pesanSuara = jenisScan === 'Masuk' 
+                        ? `Hallo ${anggota.namaLengkap}, Presensi Masuk berhasil disimpan.` 
+                        : `Hallo ${anggota.namaLengkap}, Presensi Pulang berhasil disimpan, hati-hati dijalan ya.`;
+                    speakVoice(pesanSuara);
+                    
+                    if(anggota.emailOrangTua) sendEmailJS(anggota.emailOrangTua, anggota.namaLengkap, `Scan ${jenisScan} Latihan`, jamS);
+                } else {
+                    UI.alert("QR Code tidak valid/Anggota tidak ditemukan!", "red");
+                    speakVoice("Maaf, barcode tidak terdaftar");
+                }
+                setTimeout(() => { isProcessing = false; }, 2500);
+            }).then(() => { state.isScanning = true; }).catch(e => { 
+                UI.alert("Kamera tidak dapat diakses", "red"); 
+                document.getElementById('scanner-ui').classList.add('hidden');
+            });
+        };
+        
+        document.getElementById('stopScanBtn').onclick = () => {
+            if(state.qrScanner && state.isScanning) {
+                state.qrScanner.stop().then(() => {
+                    state.isScanning = false;
+                    document.getElementById('scanner-ui').classList.add('hidden');
+                }).catch(err => console.log(err));
+            } else { document.getElementById('scanner-ui').classList.add('hidden'); }
+        };
+    }
+
+    async function viewAdminScan() {
+        UI.showLoading();
+        const jadwal = await DB.get('jadwal');
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Scan Presensi Latihan</h2>
+            <div class="glass-panel p-6 rounded-2xl mb-6 max-w-lg mx-auto">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Jadwal Latihan:</label>
+                    <select id="scanJadwalId" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200">
+                        <option value="">-- Pilih Jadwal --</option>
+                        ${jadwal.map(j => `<option value="${j.id}">${j.tanggal} - ${j.agenda}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Jenis Presensi:</label>
+                    <select id="scanJenis" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200">
+                        <option value="Masuk">Jam Masuk (Hadir)</option>
+                        <option value="Pulang">Jam Pulang</option>
+                    </select>
+                </div>
+                <button id="startScanBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg"><i class="fas fa-camera mr-2"></i> Buka Kamera Scanner</button>
+            </div>
+            <div id="scanner-ui" class="hidden max-w-lg mx-auto glass-panel p-4 rounded-2xl text-center">
+                <div id="reader" class="w-full rounded-xl overflow-hidden mb-4 shadow-inner bg-black"></div>
+                <button id="stopScanBtn" class="bg-red-100 text-red-600 px-6 py-2 rounded-full font-bold hover:bg-red-200 transition">Tutup Kamera</button>
+            </div>
+        `;
+        UI.render(renderLayout('admin', html));
+        setTimeout(initScanner, 300);
+    }
+
+    // -- Admin: Jadwal --
+    window.simpanJadwal = async (e) => {
+        e.preventDefault();
+        const data = { tanggal: e.target.tgl.value, waktu: e.target.wkt.value, lokasi: e.target.lok.value, agenda: e.target.ag.value };
+        await DB.add('jadwal', data); UI.alert("Jadwal tersimpan!", "green"); viewAdminJadwal();
+    };
+    window.hapusJadwal = async (id) => { if(confirm("Hapus jadwal?")) { await DB.delete('jadwal', id); viewAdminJadwal(); } };
+    async function viewAdminJadwal() {
+        UI.showLoading();
+        const jadwal = await DB.get('jadwal');
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Jadwal</h2>
+            <div class="glass-panel p-6 rounded-2xl mb-8">
+                <h3 class="font-bold mb-4">Buat Jadwal Baru</h3>
+                <form onsubmit="simpanJadwal(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input required type="date" name="tgl" class="p-3 rounded-lg bg-gray-50 border">
+                    <input required type="time" name="wkt" class="p-3 rounded-lg bg-gray-50 border">
+                    <input required type="text" name="lok" placeholder="Lokasi (mis: Lap. Utama)" class="p-3 rounded-lg bg-gray-50 border">
+                    <input required type="text" name="ag" placeholder="Agenda Latihan" class="p-3 rounded-lg bg-gray-50 border">
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-lg md:col-span-4 hover:bg-blue-700">Simpan Jadwal</button>
+                </form>
+            </div>
+            <div class="space-y-4">
+                ${jadwal.map(j => `
+                    <div class="glass-panel p-4 rounded-xl flex justify-between items-center border-l-4 border-blue-500">
+                        <div>
+                            <p class="font-bold text-gray-800 text-lg">${j.agenda}</p>
+                            <p class="text-sm text-gray-500"><i class="fas fa-calendar mr-2"></i>${j.tanggal} | <i class="fas fa-clock mx-2"></i>${j.waktu} | <i class="fas fa-map-marker-alt mx-2"></i>${j.lokasi}</p>
+                        </div>
+                        <button onclick="hapusJadwal('${j.id}')" class="text-red-500 hover:bg-red-50 p-3 rounded-full transition"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('admin', html));
+    }
+
+    // -- Admin: Materi --
+    window.simpanMateri = async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
+        btn.innerText = "Mengunggah..."; btn.disabled = true;
+
+        const judul = e.target.jd.value;
+        const targetSeksi = e.target.sek.value;
+        const status = e.target.st.value;
+        const fileInput = e.target.fileMat;
+        const file = fileInput.files[0];
+
+        let fileUrl = null;
+        let fileName = null;
+
+        try {
+            // Proses Upload File
+            if (file) {
+                fileName = file.name;
+                if (IS_PREVIEW) {
+                    fileUrl = URL.createObjectURL(file); // URL lokal sementara untuk mode preview
+                } else {
+                    const fileRef = sRef(storage, `materi/${Date.now()}_${file.name}`);
+                    await uploadBytes(fileRef, file);
+                    fileUrl = await getDownloadURL(fileRef);
+                }
+            }
+
+            const data = { judul, targetSeksi, status, fileUrl, fileName };
+            await DB.add('materi', data); 
+            UI.alert("Materi tersimpan!", "green"); 
+            viewAdminMateri();
+        } catch (err) {
+            console.error(err);
+            UI.alert("Gagal menyimpan materi. Pastikan ukuran file sesuai.", "red");
+            btn.innerText = originalText; btn.disabled = false;
+        }
+    };
+    window.hapusMateri = async (id) => { if(confirm("Hapus materi?")) { await DB.delete('materi', id); viewAdminMateri(); } };
+    
+    async function viewAdminMateri() {
+        UI.showLoading();
+        const materi = await DB.get('materi');
+        const seksiList = await DB.get('seksi');
+        
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Materi & Repertoar</h2>
+            <form onsubmit="simpanMateri(event)" class="glass-panel p-6 rounded-2xl mb-8 flex flex-col gap-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input required type="text" name="jd" placeholder="Judul Lagu/Materi" class="flex-1 p-3 rounded-lg bg-gray-50 border">
+                    
+                    <div class="flex gap-2">
+                        <select required name="sek" class="p-3 rounded-lg bg-gray-50 border w-full">
+                            <option value="Semua Seksi">Semua Seksi</option>
+                            ${seksiList.map(s => `<option value="${s.nama}">${s.nama}</option>`).join('')}
+                        </select>
+                        <button type="button" onclick="bukaModalSeksi()" class="bg-gray-200 text-gray-700 px-3 rounded-lg font-bold hover:bg-gray-300 transition" title="Tambah Seksi Baru"><i class="fas fa-plus"></i></button>
+                    </div>
+                    
+                    <select required name="st" class="p-3 rounded-lg bg-gray-50 border">
+                        <option value="Belum Dimulai">Belum Dimulai</option><option value="Sedang Dilatih">Sedang Dilatih</option><option value="Selesai">Selesai</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4 items-center mt-2">
+                    <input type="file" name="fileMat" class="flex-1 p-2 rounded-lg bg-gray-50 border text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf,.jpg,.jpeg,.png,.mp3,.doc,.docx">
+                    <button type="submit" class="w-full md:w-auto bg-blue-600 text-white px-8 font-bold rounded-lg py-3 hover:bg-blue-700 transition">Simpan Materi</button>
+                </div>
+            </form>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${materi.map(m => `
+                    <div class="glass-panel p-5 rounded-xl border border-gray-100 relative">
+                        <span class="absolute top-4 right-4 text-xs font-bold px-2 py-1 rounded ${m.status==='Selesai'?'bg-green-100 text-green-700': m.status==='Sedang Dilatih'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-700'}">${m.status}</span>
+                        <h4 class="font-bold text-lg text-gray-800 pr-24">${m.judul}</h4>
+                        <p class="text-sm text-gray-500 mt-1 mb-2"><i class="fas fa-users mr-1"></i> ${m.targetSeksi}</p>
+                        
+                        ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="text-blue-600 text-xs font-bold block mb-3 hover:underline"><i class="fas fa-file-download mr-1"></i> Unduh File (${m.fileName || 'Lampiran'})</a>` : '<p class="text-xs text-gray-400 mb-3 italic">Tidak ada file lampiran</p>'}
+                        
+                        <button onclick="hapusMateri('${m.id}')" class="text-xs text-red-500 font-semibold hover:underline"><i class="fas fa-trash"></i> Hapus Materi</button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('admin', html));
+    }
+
+    // -- Admin: Pengumuman --
+    window.simpanPengumuman = async (e) => {
+        e.preventDefault();
+        const data = { tanggal: new Date().toLocaleDateString('id-ID'), judul: e.target.jd.value, isi: e.target.isi.value };
+        await DB.add('pengumuman', data); UI.alert("Pengumuman dipublikasi!", "green"); viewAdminPengumuman();
+    };
+    window.hapusPengumuman = async (id) => { if(confirm("Hapus?")) { await DB.delete('pengumuman', id); viewAdminPengumuman(); } };
+    async function viewAdminPengumuman() {
+        UI.showLoading();
+        const info = await DB.get('pengumuman');
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Papan Informasi</h2>
+            <form onsubmit="simpanPengumuman(event)" class="glass-panel p-6 rounded-2xl mb-8 flex flex-col gap-4">
+                <input required type="text" name="jd" placeholder="Judul Pengumuman" class="p-3 rounded-lg bg-gray-50 border">
+                <textarea required name="isi" rows="3" placeholder="Isi Pengumuman..." class="p-3 rounded-lg bg-gray-50 border"></textarea>
+                <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">Publikasikan</button>
+            </form>
+            <div class="space-y-4">
+                ${info.reverse().map(i => `
+                    <div class="glass-panel p-5 rounded-xl border-l-4 border-yellow-400">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-lg">${i.judul}</h4>
+                            <button onclick="hapusPengumuman('${i.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-3"><i class="fas fa-clock"></i> ${i.tanggal}</p>
+                        <p class="text-sm text-gray-700 whitespace-pre-wrap">${i.isi}</p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('admin', html));
+    }
+
+    // =========================================================================
+    // 9. LOGIC HALAMAN USER (ANGGOTA)
+    // =========================================================================
+    async function viewUserDashboard() {
+        const u = state.currentUser.data;
+        const info = await DB.get('pengumuman');
+        const latestInfo = info.length > 0 ? info[info.length-1] : null;
+        const notifHTML = await generateDashboardNotifications(false, u.id);
+
+        let html = `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Sisi Kiri: Profil & QR Code -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-panel p-6 rounded-3xl text-center bg-gradient-to-b from-blue-50 to-white">
+                        <img src="${u.fotoUrl || appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-24 h-24 object-cover rounded-full mx-auto mb-4 shadow-md border-4 border-white">
+                        <h2 class="text-2xl font-bold text-gray-800">${u.namaLengkap}</h2>
+                        <p class="text-blue-600 font-semibold mb-2">${u.seksi}</p>
+                        <p class="text-xs text-gray-400 font-bold mb-6">${u.kelas} • ID: ${u.username}</p>
+                        
+                        <div class="bg-white p-4 rounded-2xl shadow-sm inline-block border border-gray-100 mb-6">
+                            <p class="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">Tunjukkan QR ini ke Pelatih</p>
+                            <div id="qrcode-box" class="flex justify-center"></div>
+                        </div>
+
+                        <!-- Detail Identitas Pribadi Anggota -->
+                        <div class="text-left border-t border-gray-100 pt-6 max-w-md mx-auto space-y-4">
+                            <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider"><i class="fas fa-id-card mr-1"></i> Profil Anggota</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Tempat Lahir</p>
+                                    <p class="text-sm font-semibold text-gray-700 mt-0.5">${u.tempatLahir || '-'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Tanggal Lahir</p>
+                                    <p class="text-sm font-semibold text-gray-700 mt-0.5">${formatTanggalIndo(u.tanggalLahir)}</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">No. WhatsApp</p>
+                                    <p class="text-sm font-semibold text-gray-700 mt-0.5">${u.noWa || '-'}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">Alamat Rumah</p>
+                                <p class="text-sm font-semibold text-gray-700 mt-0.5">${u.alamat || '-'}</p>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-4 rounded-2xl space-y-2">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase"><i class="fas fa-user-friends mr-1"></i> Orang Tua / Wali</p>
+                                <p class="text-sm font-semibold text-gray-700">${u.namaOrangTua || '-'} (${u.pekerjaan || '-'})</p>
+                                <p class="text-xs text-gray-500 font-mono">${u.emailOrangTua || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sisi Kanan: Pengumuman & Notifikasi Ulang Tahun/Jadwal/Materi -->
+                <div class="space-y-6 h-fit">
+                    <!-- Notifikasi Update Center -->
+                    <div class="glass-panel p-6 rounded-2xl border border-gray-100">
+                        <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bell text-blue-500 mr-1 animate-bounce"></i> Pemberitahuan Hari Ini</h3>
+                        <div class="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                            ${notifHTML}
+                        </div>
+                    </div>
+
+                    <!-- Pengumuman Umum -->
+                    ${latestInfo ? `
+                    <div class="glass-panel p-6 rounded-2xl border border-gray-100">
+                        <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bullhorn text-amber-500 mr-1"></i> Informasi Terbaru</h3>
+                        <div class="border-l-4 border-yellow-400 pl-4 py-1">
+                            <h4 class="font-bold text-gray-800 text-sm">${latestInfo.judul}</h4>
+                            <p class="text-[10px] text-gray-400 mb-2">${latestInfo.tanggal}</p>
+                            <p class="text-xs text-gray-600 whitespace-pre-wrap">${latestInfo.isi}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        UI.render(renderLayout('user', html));
+        setTimeout(() => { new QRCode(document.getElementById("qrcode-box"), { text: u.username, width: 180, height: 180, colorDark : "#1e3a8a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H }); }, 300);
+    }
+
+    async function viewUserJadwal() {
+        UI.showLoading();
+        const jadwal = await DB.get('jadwal');
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Jadwal Saya</h2>
+            <div class="space-y-4">
+                ${jadwal.length === 0 ? '<p class="text-gray-500">Belum ada jadwal latihan.</p>' : jadwal.map(j => `
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-blue-500 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-blue-50 opacity-50 text-7xl"><i class="fas fa-calendar"></i></div>
+                        <h3 class="font-bold text-xl text-gray-800 relative z-10">${j.agenda}</h3>
+                        <div class="mt-4 space-y-2 relative z-10">
+                            <p class="text-sm text-gray-600"><i class="fas fa-calendar-day w-6 text-center text-blue-400"></i> ${j.tanggal}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-clock w-6 text-center text-blue-400"></i> Pukul ${j.waktu}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-map-marker-alt w-6 text-center text-blue-400"></i> ${j.lokasi}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('user', html));
+    }
+
+    async function viewUserKehadiran() {
+        UI.showLoading();
+        const myId = state.currentUser.data.id;
+        const presensiList = await DB.getUserPresensi(myId);
+        const jadwal = await DB.get('jadwal');
+        
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Riwayat Kehadiran</h2>
+            <div class="space-y-4">
+                ${presensiList.length === 0 ? '<p class="text-gray-500 text-center mt-10">Belum ada data kehadiran terekam.</p>' : presensiList.map(p => {
+                    const j = jadwal.find(x => x.id === p.idJadwal) || {agenda: 'Jadwal Dihapus', tanggal: '-'};
+                    return `
+                    <div class="glass-panel p-4 rounded-xl border border-gray-100 flex flex-col md:flex-row justify-between md:items-center">
+                        <div class="mb-3 md:mb-0"><p class="font-bold text-gray-800">${j.agenda}</p><p class="text-xs text-gray-500">${j.tanggal}</p></div>
+                        <div class="flex gap-4">
+                            <div class="text-center bg-green-50 p-2 rounded-lg min-w-[80px]"><p class="text-xs text-green-600 font-bold mb-1">MASUK</p><p class="text-sm font-semibold text-gray-800">${p.waktuMasuk || '--:--'}</p></div>
+                            <div class="text-center bg-gray-50 p-2 rounded-lg min-w-[80px]"><p class="text-xs text-gray-500 font-bold mb-1">PULANG</p><p class="text-sm font-semibold text-gray-800">${p.waktuPulang || '--:--'}</p></div>
+                        </div>
+                    </div>
+                    `
+                }).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('user', html));
+    }
+
+    async function viewUserMateri() {
+        UI.showLoading();
+        const mySeksi = state.currentUser.data.seksi;
+        const materi = await DB.get('materi');
+        const myMateri = materi.filter(m => m.targetSeksi === 'Semua Seksi' || m.targetSeksi === mySeksi);
+        
+        let html = `
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Target Materi Latihan</h2>
+            <div class="space-y-4">
+                ${myMateri.length === 0 ? '<p class="text-gray-500">Belum ada materi untuk seksi Anda.</p>' : myMateri.map(m => `
+                    <div class="glass-panel p-5 rounded-xl flex flex-col md:flex-row md:items-center justify-between shadow-sm">
+                        <div class="flex items-center mb-3 md:mb-0">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mr-4 shrink-0"><i class="fas fa-music"></i></div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">${m.judul}</h4>
+                                <p class="text-xs text-gray-500 mb-2">Target: ${m.targetSeksi}</p>
+                                ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition inline-block font-semibold shadow-sm"><i class="fas fa-download mr-1"></i> Buka File</a>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-left md:text-right shrink-0">
+                            <span class="text-xs font-bold px-3 py-1 rounded-full inline-block ${m.status==='Selesai'?'bg-green-100 text-green-700': m.status==='Sedang Dilatih'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-700'}">${m.status}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        UI.render(renderLayout('user', html));
+    }
+
+    // =========================================================================
+    // 10. SISTEM NAVIGASI & LOGIN
+    // =========================================================================
+    window.navigate = (viewId) => {
+        if (state.qrScanner) {
+            if (state.isScanning) { state.qrScanner.stop().then(() => { state.isScanning = false; }).catch(() => {}); }
+            state.qrScanner = null; state.isScanning = false;
+        }
+        state.activeView = viewId;
+        state.editingAnggotaId = null;
+        
+        const routes = {
+            'admin-dashboard': viewAdminDashboard, 'admin-anggota': viewAdminAnggota, 'admin-cetak': viewAdminCetak, 'admin-scan': viewAdminScan,
+            'admin-jadwal': viewAdminJadwal, 'admin-materi': viewAdminMateri, 'admin-pengumuman': viewAdminPengumuman, 'admin-pengaturan': viewAdminPengaturan,
+            'user-dashboard': viewUserDashboard, 'user-jadwal': viewUserJadwal, 'user-kehadiran': viewUserKehadiran, 'user-materi': viewUserMateri
+        };
+        if(routes[viewId]) routes[viewId]();
+    };
+
+    window.doLogout = () => {
+        if(!IS_PREVIEW && state.currentUser && state.currentUser.role === 'admin') signOut(auth);
+        state.currentUser = null; localStorage.removeItem('marching_session');
+        window.viewLoginSelector();
+    };
+
+    window.viewLoginSelector = () => {
+        UI.render(`
+            <div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-indigo-700 p-4">
+                <div class="glass-panel max-w-sm w-full p-8 rounded-3xl text-center fade-in">
+                    <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-20 h-20 object-cover rounded-full mx-auto mb-6 shadow-lg border-4 border-white">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-2">${appSettings.appName}</h1>
+                    <p class="text-gray-500 text-sm mb-8">Pilih akses masuk Anda</p>
+                    <button onclick="viewLoginAdmin()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl mb-4 hover:bg-blue-700 transition shadow-lg"><i class="fas fa-user-shield mr-2"></i> Masuk sebagai Pelatih</button>
+                    <button onclick="viewLoginUser()" class="w-full bg-white text-blue-600 border-2 border-blue-100 font-bold py-4 rounded-xl hover:bg-blue-50 transition shadow-sm"><i class="fas fa-users mr-2"></i> Masuk sebagai Anggota</button>
+                </div>
+            </div>
+        `);
+    };
+
+    window.viewLoginAdmin = () => {
+        UI.render(`
+            <div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-indigo-700 p-4">
+                <div class="glass-panel max-w-sm w-full p-8 rounded-3xl fade-in relative">
+                    <button onclick="viewLoginSelector()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-700"><i class="fas fa-arrow-left"></i> Kembali</button>
+                    <div class="text-center mt-6 mb-8">
+                        <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-16 h-16 object-cover rounded-full mx-auto shadow-md border-2 border-white mb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Login Pelatih</h2>
+                    </div>
+                    <form onsubmit="handleLoginAdmin(event)" class="space-y-4">
+                        <div><input required type="email" id="admEmail" placeholder="Email Firebase Auth" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><input required type="password" id="admPass" placeholder="Password" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        ${IS_PREVIEW ? '<p class="text-xs text-red-500 text-center font-bold">*Mode Preview: Ketik sembarang untuk masuk</p>' : ''}
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg mt-2">Masuk Panel Admin</button>
+                    </form>
+                </div>
+            </div>
+        `);
+    };
+
+    window.viewLoginUser = () => {
+        UI.render(`
+            <div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-indigo-700 p-4">
+                <div class="glass-panel max-w-sm w-full p-8 rounded-3xl fade-in relative">
+                    <button onclick="viewLoginSelector()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-700"><i class="fas fa-arrow-left"></i> Kembali</button>
+                    <div class="text-center mt-6 mb-8">
+                        <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-16 h-16 object-cover rounded-full mx-auto shadow-md border-2 border-white mb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Login Anggota</h2>
+                    </div>
+                    <form onsubmit="handleLoginUser(event)" class="space-y-4">
+                        <div><input required type="text" id="usrName" placeholder="Username (contoh: user1)" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><input required type="password" id="usrPass" placeholder="Password (contoh: 123)" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg mt-2">Masuk Panel Anggota</button>
+                    </form>
+                </div>
+            </div>
+        `);
+    };
+
+    window.handleLoginAdmin = async (e) => {
+        e.preventDefault();
+        const em = document.getElementById('admEmail').value; const ps = document.getElementById('admPass').value;
+        UI.showLoading();
+        try {
+            if(!IS_PREVIEW) { await signInWithEmailAndPassword(auth, em, ps); await autoSetupDatabase(); }
+            state.currentUser = { role: 'admin' }; localStorage.setItem('marching_session', JSON.stringify({role: 'admin'}));
+            await loadSettings();
+            navigate('admin-dashboard');
+        } catch(err) { UI.alert("Login gagal! Cek kredensial Anda.", "red"); window.viewLoginAdmin(); }
+    };
+
+    window.handleLoginUser = async (e) => {
+        e.preventDefault();
+        const un = document.getElementById('usrName').value; const ps = document.getElementById('usrPass').value;
+        UI.showLoading();
+        try {
+            let userDoc = null;
+            if(IS_PREVIEW) { userDoc = mockDB.anggota.find(x => x.username === un && x.password === ps); } 
+            else {
+                const q = query(collection(db, "anggota"), where("username", "==", un), where("password", "==", ps));
+                const snap = await getDocs(q);
+                if(!snap.empty) userDoc = { id: snap.docs[0].id, ...snap.docs[0].data() };
+            }
+            if(userDoc) {
+                state.currentUser = { role: 'user', data: userDoc }; localStorage.setItem('marching_session', JSON.stringify(state.currentUser));
+                await loadSettings();
+                navigate('user-dashboard');
+            } else { UI.alert("Username atau Password salah!", "red"); window.viewLoginUser(); }
+        } catch(err) { UI.alert("Terjadi kesalahan jaringan", "red"); window.viewLoginUser(); }
+    };
+
+    // Binding fungsi ke lingkup global agar dapat dipanggil oleh elemen HTML onclick
+    window.printSatuKartu = printSatuKartu;
+    window.printSemuaKartu = printSemuaKartu;
+    window.bukaModalTambahAnggota = bukaModalTambahAnggota;
+    window.tutupModalAnggota = tutupModalAnggota;
+    window.cariAnggota = cariAnggota;
+
+    window.onload = async () => {
+        await loadSettings();
+        const session = localStorage.getItem('marching_session');
+        if(session) {
+            state.currentUser = JSON.stringify(session) !== 'undefined' ? JSON.parse(session) : null;
+            if(state.currentUser && state.currentUser.role === 'admin') navigate('admin-dashboard');
+            else if(state.currentUser && state.currentUser.role === 'user') navigate('user-dashboard');
+            else window.viewLoginSelector();
+        } else { window.viewLoginSelector(); }
+    };
+</script>
+
+</body>
+</html>
