@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Marching Band</title>
+    <title>Sistem Admin Marching Band</title>
     
     <!-- PWA Manifest Injection via Data URI -->
     <script>
@@ -13,7 +13,7 @@
             "start_url": ".",
             "display": "standalone",
             "background_color": "#ffffff",
-            "theme_color": "#3b82f6",
+            "theme_color": "#7c3aed",
             "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/3387/3387063.png", "sizes": "512x512", "type": "image/png"}]
         };
         const manifestStr = JSON.stringify(manifestJSON);
@@ -34,8 +34,8 @@
 
     <style>
         /* FULL PAGE OVERRIDE (Menutupi Layout Blogger) */
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; overflow: hidden; letter-spacing: -0.01em; }
-        #app-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; background-color: #f8fafc; overflow-y: auto; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F6F5FC; overflow: hidden; letter-spacing: -0.01em; }
+        #app-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; background-color: #F6F5FC; overflow-y: auto; }
         
         /* Glassmorphism Utilities */
         .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
@@ -51,7 +51,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Loader */
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #7c3aed; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* CSS KHUSUS PENCETAKAN (PRINT RULES & CR80 STANDARDIZATION) */
@@ -380,7 +380,7 @@ const firebaseConfig = {
     const UI = {
         showLoading: () => document.getElementById('app-root').innerHTML = `<div class="flex items-center justify-center h-full"><div class="loader"></div></div>`,
         render: (html) => document.getElementById('app-root').innerHTML = html,
-        alert: (msg, type="blue") => {
+        alert: (msg, type="purple") => {
             const el = document.createElement('div');
             el.className = `fixed top-5 left-1/2 transform -translate-x-1/2 bg-${type}-500 text-white px-6 py-3 rounded-2xl shadow-lg z-[999999] fade-in max-w-[92vw] md:max-w-md text-sm text-center`;
             el.innerHTML = `<i class="fas fa-info-circle mr-2"></i> ${msg}`;
@@ -581,7 +581,7 @@ const firebaseConfig = {
         ];
 
         const buatLinkMenu = (m, kelasTambahan = '') => `
-            <a href="#" onclick="navigate('${m.id}')" class="flex flex-col md:flex-row items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition ${state.activeView === m.id ? 'text-blue-600 bg-blue-50 font-bold' : ''} ${kelasTambahan}">
+            <a href="#" onclick="navigate('${m.id}')" class="flex flex-col md:flex-row items-center p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition ${state.activeView === m.id ? 'text-purple-600 bg-purple-50 font-bold' : ''} ${kelasTambahan}">
                 <i class="fas ${m.icon} md:mr-3 text-xl md:text-lg mb-1 md:mb-0"></i>
                 <span class="text-xs md:text-base">${m.label}</span>
             </a>
@@ -589,6 +589,15 @@ const firebaseConfig = {
 
         // navLinks: daftar lengkap untuk sidebar desktop
         let navLinks = menuItems.map(m => buatLinkMenu(m)).join('');
+
+        // navLinksRail: versi ikon-saja untuk sidebar desktop bergaya "rail" (sesuai referensi UI)
+        let navLinksRail = menuItems.map(m => `
+            <a href="#" onclick="navigate('${m.id}')" title="${m.label}"
+               class="group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${state.activeView === m.id ? 'bg-white text-purple-600 shadow-lg shadow-purple-900/20' : 'text-purple-200 hover:bg-white/15 hover:text-white'}">
+                <i class="fas ${m.icon} text-lg"></i>
+                <span class="pointer-events-none absolute left-full ml-3 whitespace-nowrap bg-gray-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition z-50">${m.label}</span>
+            </a>
+        `).join('');
 
         // Untuk bottom nav mobile: pisahkan menu utama & menu lainnya
         const menuUtama = menuItems.filter(m => m.utama);
@@ -599,7 +608,7 @@ const firebaseConfig = {
         let mobileNavLinks = menuUtama.map(m => buatLinkMenu(m, 'flex-1')).join('');
 
         let tombolLainnya = adaMenuLainnya ? `
-            <a href="#" onclick="toggleMenuLainnya()" class="flex flex-1 flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition ${menuLainnyaAktif ? 'text-blue-600 bg-blue-50 font-bold' : ''}">
+            <a href="#" onclick="toggleMenuLainnya()" class="flex flex-1 flex-col items-center p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition ${menuLainnyaAktif ? 'text-purple-600 bg-purple-50 font-bold' : ''}">
                 <i class="fas fa-ellipsis-h text-xl mb-1"></i>
                 <span class="text-xs">Lainnya</span>
             </a>
@@ -612,7 +621,7 @@ const firebaseConfig = {
                 <h3 class="text-center font-bold text-gray-700 mb-4">Menu Lainnya</h3>
                 <div class="grid grid-cols-4 gap-3">
                     ${menuLainnya.map(m => `
-                        <a href="#" onclick="navigate('${m.id}')" class="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition text-center ${state.activeView === m.id ? 'text-blue-600 bg-blue-50 font-bold' : ''}">
+                        <a href="#" onclick="navigate('${m.id}')" class="flex flex-col items-center p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition text-center ${state.activeView === m.id ? 'text-purple-600 bg-purple-50 font-bold' : ''}">
                             <i class="fas ${m.icon} text-xl mb-1.5"></i>
                             <span class="text-[11px] leading-tight">${m.label}</span>
                         </a>
@@ -626,29 +635,27 @@ const firebaseConfig = {
         ` : '';
 
         return `
-            <div class="flex h-full w-full bg-gray-50">
-                <aside class="hidden md:flex flex-col w-64 glass-panel h-full border-r border-gray-200">
-                    <div class="p-6 border-b border-gray-100 text-center">
-                        <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-16 h-16 object-cover rounded-full mx-auto shadow-lg mb-3">
-                        <h2 class="font-bold text-lg text-gray-800">${appSettings.appName}</h2>
-                        <p class="text-xs text-gray-500">${role === 'admin' ? 'Panel Pelatih' : 'Panel Anggota'}</p>
-                    </div>
-                    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">${navLinks}</nav>
-                    <div class="p-4 border-t border-gray-100">
-                        <button onclick="doLogout()" class="w-full py-2 px-4 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-semibold"><i class="fas fa-sign-out-alt mr-2"></i> Keluar</button>
-                    </div>
+            <div class="flex h-full w-full bg-[#F6F5FC]">
+                <aside class="hidden md:flex flex-col items-center w-24 py-6 gap-6 bg-gradient-to-b from-purple-600 via-purple-700 to-purple-900 rounded-r-[2rem] shadow-xl shadow-purple-900/20 h-full shrink-0">
+                    <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" title="${appSettings.appName}" class="w-11 h-11 object-cover rounded-2xl shadow-md ring-2 ring-white/40">
+                    <nav class="flex-1 flex flex-col items-center gap-3 overflow-y-auto">${navLinksRail}</nav>
+                    <button onclick="doLogout()" title="Keluar" class="w-12 h-12 flex items-center justify-center rounded-2xl text-purple-200 hover:bg-white/15 hover:text-white transition">
+                        <i class="fas fa-sign-out-alt text-lg"></i>
+                    </button>
                 </aside>
-                <main class="flex-1 h-full overflow-y-auto pb-20 md:pb-0 fade-in" id="main-scroll-area">
-                    <div class="md:hidden glass-panel p-4 flex justify-between items-center sticky top-0 z-40">
-                        <h1 class="font-bold text-lg flex items-center">
-                            <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-8 h-8 object-cover rounded-full mr-2"> 
-                            ${role === 'admin' ? 'Pelatih' : 'Anggota'}
+                <main class="flex-1 h-full overflow-y-auto pb-24 md:pb-0 fade-in" id="main-scroll-area">
+                    <div class="flex justify-between items-center sticky top-0 z-40 px-4 md:px-8 py-4 md:py-6 bg-[#F6F5FC]/90 backdrop-blur-md">
+                        <h1 class="font-bold text-base md:text-lg flex items-center text-gray-800">
+                            <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-9 h-9 object-cover rounded-xl mr-3 md:hidden shadow-sm">
+                            <span class="md:hidden">${role === 'admin' ? 'Pelatih' : 'Anggota'}</span>
+                            <span class="hidden md:inline text-gray-500 font-medium">${appSettings.appName} <span class="text-gray-300 mx-1">/</span> <span class="text-gray-800 font-bold">${role === 'admin' ? 'Panel Pelatih' : 'Panel Anggota'}</span></span>
                         </h1>
-                        <button onclick="doLogout()" class="text-red-500 text-xl"><i class="fas fa-sign-out-alt"></i></button>
+                        <button onclick="doLogout()" class="md:hidden text-purple-500 text-xl w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"><i class="fas fa-sign-out-alt"></i></button>
+                        <button onclick="doLogout()" class="hidden md:flex items-center gap-2 text-sm font-semibold text-red-500 bg-white hover:bg-red-50 px-4 py-2.5 rounded-2xl shadow-sm transition"><i class="fas fa-sign-out-alt"></i> Keluar</button>
                     </div>
-                    <div class="p-4 md:p-8">${content}</div>
+                    <div class="px-4 md:px-8 pb-8">${content}</div>
                 </main>
-                <nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-gray-200 flex justify-around p-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">${mobileNavLinks}${tombolLainnya}</nav>
+                <nav class="md:hidden fixed bottom-3 left-3 right-3 bg-white rounded-3xl border border-gray-100 flex justify-around p-1.5 z-50 shadow-[0_10px_30px_rgba(124,58,237,0.18)]">${mobileNavLinks}${tombolLainnya}</nav>
                 ${panelLainnya}
             </div>
         `;
@@ -739,8 +746,8 @@ const firebaseConfig = {
         if (materiTerbaru.length > 0) {
             materiTerbaru.slice(-2).forEach(m => {
                 notificationsHTML += `
-                    <div class="glass p-4 rounded-2xl border-l-4 border-indigo-500 flex items-start gap-3 shadow-sm fade-in mb-4">
-                        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                    <div class="glass p-4 rounded-2xl border-l-4 border-pink-500 flex items-start gap-3 shadow-sm fade-in mb-4">
+                        <div class="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
                             <i class="fas fa-music text-lg"></i>
                         </div>
                         <div class="flex-1">
@@ -767,39 +774,48 @@ const firebaseConfig = {
         const notifHTML = await generateDashboardNotifications(true);
         
         let html = `
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Pelatih</h2>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Primary</p>
+                    <h2 class="text-2xl font-bold text-gray-800">Dashboard Pelatih</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Sisi Kiri: Angka Statistik -->
                 <div class="lg:col-span-2 space-y-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-blue-500">
-                            <p class="text-gray-500 text-sm font-semibold">Total Anggota Terdaftar</p>
-                            <p class="text-3xl font-extrabold text-gray-800 mt-1">${anggota.length} Personel</p>
+                        <div class="relative overflow-hidden bg-gradient-to-br from-purple-600 to-purple-800 text-white p-6 rounded-3xl shadow-lg shadow-purple-900/20">
+                            <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full"></div>
+                            <div class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center mb-4"><i class="fas fa-users"></i></div>
+                            <p class="text-purple-100 text-sm font-semibold">Total Anggota Terdaftar</p>
+                            <p class="text-3xl font-extrabold mt-1">${anggota.length} <span class="text-base font-semibold text-purple-200">Personel</span></p>
                         </div>
-                        <div class="glass-panel p-6 rounded-2xl border-l-4 border-green-500">
-                            <p class="text-gray-500 text-sm font-semibold">Agenda Latihan</p>
-                            <p class="text-3xl font-extrabold text-gray-800 mt-1">${jadwal.length} Jadwal</p>
+                        <div class="relative overflow-hidden bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white p-6 rounded-3xl shadow-lg shadow-pink-900/20">
+                            <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full"></div>
+                            <div class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center mb-4"><i class="fas fa-calendar-alt"></i></div>
+                            <p class="text-pink-100 text-sm font-semibold">Agenda Latihan</p>
+                            <p class="text-3xl font-extrabold mt-1">${jadwal.length} <span class="text-base font-semibold text-pink-100">Jadwal</span></p>
                         </div>
                     </div>
 
-                    <div class="glass-panel p-6 rounded-2xl border border-gray-100">
-                        <h3 class="font-bold mb-4 text-gray-800"><i class="far fa-calendar-alt text-blue-500 mr-1"></i> Agenda Terdekat</h3>
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold mb-4 text-gray-800"><i class="far fa-calendar-alt text-purple-500 mr-1"></i> Agenda Terdekat</h3>
                         ${jadwal.length === 0 ? '<p class="text-gray-500">Belum ada jadwal.</p>' : jadwal.slice(-3).map(j => `
                             <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                                 <div>
                                     <p class="font-bold text-gray-800">${j.agenda}</p>
                                     <p class="text-xs text-gray-500 mt-0.5"><i class="fas fa-calendar mr-1"></i> ${formatTanggalIndo(j.tanggal)} - ${j.waktu} WIB</p>
                                 </div>
-                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">${j.lokasi}</span>
+                                <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">${j.lokasi}</span>
                             </div>
                         `).join('')}
                     </div>
                 </div>
 
                 <!-- Sisi Kanan: Notifikasi Center -->
-                <div class="glass-panel p-6 rounded-2xl border border-gray-100 h-fit">
-                    <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bell text-blue-500 mr-1 animate-bounce"></i> Pemberitahuan Hari Ini</h3>
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
+                    <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bell text-purple-500 mr-1 animate-bounce"></i> Pemberitahuan Hari Ini</h3>
                     <div class="space-y-4 max-h-[400px] overflow-y-auto pr-1">
                         ${notifHTML}
                     </div>
@@ -817,10 +833,10 @@ const firebaseConfig = {
         modal.innerHTML = `
             <div class="bg-white p-6 rounded-2xl max-w-sm w-full">
                 <h3 class="font-bold text-lg mb-4 text-gray-800">Tambah Seksi Baru</h3>
-                <input type="text" id="newSeksiName" class="w-full p-3 border border-gray-300 rounded-lg mb-4 outline-none focus:border-blue-500" placeholder="Nama Seksi (mis: Visual, dll)">
+                <input type="text" id="newSeksiName" class="w-full p-3 border border-gray-300 rounded-lg mb-4 outline-none focus:border-purple-500" placeholder="Nama Seksi (mis: Visual, dll)">
                 <div class="flex justify-end gap-2">
                     <button onclick="document.getElementById('modal-seksi').remove()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Batal</button>
-                    <button onclick="simpanSeksiBaru()" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">Simpan</button>
+                    <button onclick="simpanSeksiBaru()" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">Simpan</button>
                 </div>
             </div>
         `;
@@ -848,7 +864,7 @@ const firebaseConfig = {
         modal.innerHTML = `
             <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative">
                 <!-- Cover Header -->
-                <div class="h-28 bg-gradient-to-r from-blue-600 to-indigo-800 relative">
+                <div class="h-28 bg-gradient-to-r from-purple-600 to-pink-800 relative">
                     <button onclick="document.getElementById('modal-detail-anggota').remove()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white w-8 h-8 rounded-full flex items-center justify-center transition">
                         <i class="fas fa-times"></i>
                     </button>
@@ -860,7 +876,7 @@ const firebaseConfig = {
                         <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-24 h-24 object-cover rounded-full border-4 border-white shadow-md bg-white">
                         <div class="text-center sm:text-left">
                             <h3 class="font-extrabold text-2xl text-gray-800">${a.namaLengkap}</h3>
-                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${a.seksi}</span>
+                            <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${a.seksi}</span>
                         </div>
                     </div>
 
@@ -884,7 +900,7 @@ const firebaseConfig = {
                             </div>
                             <div>
                                 <p class="text-xs font-bold text-gray-400 uppercase">No. WhatsApp</p>
-                                <p class="text-sm font-semibold text-blue-600 mt-0.5 hover:underline">
+                                <p class="text-sm font-semibold text-purple-600 mt-0.5 hover:underline">
                                     <a href="https://wa.me/${a.noWa ? a.noWa.replace(/[^0-9]/g, '') : ''}" target="_blank"><i class="fab fa-whatsapp mr-1"></i> ${a.noWa || '-'}</a>
                                 </p>
                             </div>
@@ -941,7 +957,7 @@ const firebaseConfig = {
         
         const btnSubmit = document.getElementById('btn-submit-anggota');
         btnSubmit.innerText = "Simpan Anggota";
-        btnSubmit.className = "flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition";
+        btnSubmit.className = "flex-1 bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 transition";
     };
 
     window.tutupModalAnggota = () => {
@@ -1048,34 +1064,34 @@ const firebaseConfig = {
                     <form id="form-anggota-el" onsubmit="simpanAnggota(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto p-1">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Lengkap</label>
-                            <input required type="text" name="nama" placeholder="Nama Lengkap" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="nama" placeholder="Nama Lengkap" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tempat Lahir</label>
-                                <input required type="text" name="tempatLahir" placeholder="Kota Lahir" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                                <input required type="text" name="tempatLahir" placeholder="Kota Lahir" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal Lahir</label>
-                                <input required type="date" name="tanggalLahir" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                                <input required type="date" name="tanggalLahir" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kelas</label>
-                            <input required type="text" name="kelas" placeholder="Contoh: XI MIPA 2" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="kelas" placeholder="Contoh: XI MIPA 2" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Alamat Lengkap</label>
-                            <input required type="text" name="alamat" placeholder="Alamat Rumah" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="alamat" placeholder="Alamat Rumah" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">No. WhatsApp</label>
-                            <input required type="tel" name="noWa" placeholder="Contoh: 081234567890" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="tel" name="noWa" placeholder="Contoh: 081234567890" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seksi</label>
                             <div class="flex gap-2">
-                                <select required name="seksi" class="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                                <select required name="seksi" class="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                                     <option value="">-- Pilih Seksi --</option>
                                     ${seksiList.map(s => `<option value="${s.nama}">${s.nama}</option>`).join('')}
                                 </select>
@@ -1089,15 +1105,15 @@ const firebaseConfig = {
 
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Orang Tua / Wali</label>
-                            <input required type="text" name="namaOrangTua" placeholder="Nama Ibu/Ayah/Wali" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="namaOrangTua" placeholder="Nama Ibu/Ayah/Wali" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pekerjaan Orang Tua / Wali</label>
-                            <input required type="text" name="pekerjaan" placeholder="Contoh: PNS, Wiraswasta" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="pekerjaan" placeholder="Contoh: PNS, Wiraswasta" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Orang Tua (Untuk Notifikasi Presensi)</label>
-                            <input required type="email" name="email" placeholder="contoh@email.com" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="email" name="email" placeholder="contoh@email.com" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
 
                         <div class="md:col-span-2 border-t border-gray-100 pt-3 mt-1">
@@ -1106,19 +1122,19 @@ const firebaseConfig = {
 
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL Foto Profil Anggota (Gambar Web)</label>
-                            <input type="url" name="fotoUrl" placeholder="https://link-foto-anda.com/gambar.jpg" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input type="url" name="fotoUrl" placeholder="https://link-foto-anda.com/gambar.jpg" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username Login</label>
-                            <input required type="text" name="username" placeholder="Username" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="username" placeholder="Username" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password Login</label>
-                            <input required type="text" name="password" placeholder="Password" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-blue-500">
+                            <input required type="text" name="password" placeholder="Password" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:border-purple-500">
                         </div>
                         
                         <div class="md:col-span-2 flex gap-3 mt-4">
-                            <button type="submit" id="btn-submit-anggota" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition">Simpan Anggota</button>
+                            <button type="submit" id="btn-submit-anggota" class="flex-1 bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 transition">Simpan Anggota</button>
                             <button type="button" onclick="tutupModalAnggota()" class="bg-gray-400 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-gray-500 transition">Batal</button>
                         </div>
                     </form>
@@ -1133,9 +1149,9 @@ const firebaseConfig = {
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3">
                         <i class="fas fa-search text-gray-400"></i>
                     </span>
-                    <input type="text" id="searchAnggota" oninput="cariAnggota()" placeholder="Cari nama atau seksi..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-gray-200 outline-none focus:border-blue-500 shadow-sm transition">
+                    <input type="text" id="searchAnggota" oninput="cariAnggota()" placeholder="Cari nama atau seksi..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-gray-200 outline-none focus:border-purple-500 shadow-sm transition">
                 </div>
-                <button onclick="bukaModalTambahAnggota()" class="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center justify-center gap-2">
+                <button onclick="bukaModalTambahAnggota()" class="w-full md:w-auto bg-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-purple-700 transition shadow-md flex items-center justify-center gap-2">
                     <i class="fas fa-plus"></i> Tambah Anggota
                 </button>
             </div>
@@ -1146,17 +1162,17 @@ const firebaseConfig = {
                 ${anggota.map(a => `
                     <div class="anggota-card glass-panel p-5 rounded-3xl border border-gray-200 flex items-center justify-between shadow-sm hover:shadow-md transition" data-nama="${a.namaLengkap}" data-seksi="${a.seksi}">
                         <div class="flex items-center gap-4">
-                            <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-16 h-16 object-cover rounded-full shadow-sm bg-white border-2 border-blue-100">
+                            <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-16 h-16 object-cover rounded-full shadow-sm bg-white border-2 border-purple-100">
                             <div>
                                 <h4 class="font-extrabold text-lg text-gray-800">${a.namaLengkap}</h4>
                                 <div class="flex gap-2 items-center mt-1">
-                                    <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${a.seksi}</span>
+                                    <span class="bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${a.seksi}</span>
                                     <span class="text-xs text-gray-400 font-semibold">${a.kelas}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="flex flex-col gap-2">
-                            <button onclick="bukaDetailAnggota('${a.id}')" class="text-blue-600 bg-blue-50 w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Lihat Profil Lengkap"><i class="fas fa-eye"></i></button>
+                            <button onclick="bukaDetailAnggota('${a.id}')" class="text-purple-600 bg-purple-50 w-9 h-9 rounded-full flex items-center justify-center hover:bg-purple-600 hover:text-white transition" title="Lihat Profil Lengkap"><i class="fas fa-eye"></i></button>
                             <div class="flex gap-1.5">
                                 <button onclick="editAnggota('${a.id}')" class="text-yellow-500 bg-yellow-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-yellow-500 hover:text-white transition" title="Edit"><i class="fas fa-edit"></i></button>
                                 <button onclick="hapusAnggota('${a.id}')" class="text-red-500 bg-red-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition" title="Hapus"><i class="fas fa-trash"></i></button>
@@ -1192,7 +1208,7 @@ const firebaseConfig = {
             <div class="text-center w-full relative z-10">
                 <div class="flex items-center justify-center gap-1">
                     <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="card-logo" style="object-fit: cover; border-radius: 9999px;">
-                    <span class="card-app-title uppercase tracking-widest text-blue-200 font-bold">${appSettings.bandName}</span>
+                    <span class="card-app-title uppercase tracking-widest text-purple-200 font-bold">${appSettings.bandName}</span>
                 </div>
                 <h4 class="card-header-title font-black uppercase tracking-wider text-white" style="margin: 0.5mm 0 0 0;">${appSettings.cardTitle}</h4>
                 <div style="width: 12mm; height: 0.6mm; background-color: #facc15; margin: 0.8mm auto 0 auto; border-radius: 9999px;"></div>
@@ -1204,7 +1220,7 @@ const firebaseConfig = {
                 <p style="font-size: 4pt; text-transform: uppercase; tracking-wider; color: #93c5fd; font-weight: 600; margin: 0;">Nama Anggota</p>
                 <h3 class="card-name font-extrabold text-white" style="margin: 0.2mm 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-w: 46mm;">${a.namaLengkap}</h3>
                 <p class="card-class text-gray-300" style="margin: 0;">Kelas: ${a.kelas || '-'}</p>
-                <span class="card-seksi bg-yellow-400 text-indigo-950 font-black rounded-full inline-block uppercase tracking-wider">${a.seksi}</span>
+                <span class="card-seksi bg-yellow-400 text-pink-950 font-black rounded-full inline-block uppercase tracking-wider">${a.seksi}</span>
             </div>
 
             <!-- QR Code Area -->
@@ -1212,7 +1228,7 @@ const firebaseConfig = {
                 <div class="card-qr-container bg-white flex items-center justify-center" style="border: 1px solid #facc15;">
                     <div id="print-qr-single" class="flex justify-center items-center"></div>
                 </div>
-                <p class="card-footer-id text-blue-300 font-mono uppercase tracking-widest" style="margin: 0.8mm 0 0 0;">ID: ${a.username}</p>
+                <p class="card-footer-id text-purple-300 font-mono uppercase tracking-widest" style="margin: 0.8mm 0 0 0;">ID: ${a.username}</p>
             </div>
         `;
 
@@ -1255,7 +1271,7 @@ const firebaseConfig = {
                 <div class="text-center w-full relative z-10">
                     <div class="flex items-center justify-center gap-1">
                         <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="card-logo" style="object-fit: cover; border-radius: 9999px;">
-                        <span class="card-app-title uppercase tracking-widest text-blue-200 font-bold">${appSettings.bandName}</span>
+                        <span class="card-app-title uppercase tracking-widest text-purple-200 font-bold">${appSettings.bandName}</span>
                     </div>
                     <h4 class="card-header-title font-black uppercase tracking-wider text-white" style="margin: 0.5mm 0 0 0;">${appSettings.cardTitle}</h4>
                     <div style="width: 12mm; height: 0.6mm; background-color: #facc15; margin: 0.8mm auto 0 auto; border-radius: 9999px;"></div>
@@ -1267,7 +1283,7 @@ const firebaseConfig = {
                     <p style="font-size: 4pt; text-transform: uppercase; tracking-wider; color: #93c5fd; font-weight: 600; margin: 0;">Nama Anggota</p>
                     <h3 class="card-name font-extrabold text-white" style="margin: 0.2mm 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-w: 46mm;">${a.namaLengkap}</h3>
                     <p class="card-class text-gray-300" style="margin: 0;">Kelas: ${a.kelas || '-'}</p>
-                    <span class="card-seksi bg-yellow-400 text-indigo-950 font-black rounded-full inline-block uppercase tracking-wider">${a.seksi}</span>
+                    <span class="card-seksi bg-yellow-400 text-pink-950 font-black rounded-full inline-block uppercase tracking-wider">${a.seksi}</span>
                 </div>
 
                 <!-- QR Code Area -->
@@ -1275,7 +1291,7 @@ const firebaseConfig = {
                     <div class="card-qr-container bg-white flex items-center justify-center" style="border: 1px solid #facc15;">
                         <div id="print-qr-bulk-${index}" class="flex justify-center items-center"></div>
                     </div>
-                    <p class="card-footer-id text-blue-300 font-mono uppercase tracking-widest" style="margin: 0.8mm 0 0 0;">ID: ${a.username}</p>
+                    <p class="card-footer-id text-purple-300 font-mono uppercase tracking-widest" style="margin: 0.8mm 0 0 0;">ID: ${a.username}</p>
                 </div>
             `;
             printArea.appendChild(cardWrapper);
@@ -1317,7 +1333,7 @@ const firebaseConfig = {
             cardListHTML = `
                 <div class="flex justify-between items-center mb-6">
                     <p class="text-gray-600">Total Kartu Tersedia: <span class="font-bold">${anggota.length}</span></p>
-                    <button onclick="printSemuaKartu()" class="bg-blue-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-blue-700 transition shadow-sm"><i class="fas fa-print mr-2"></i> Cetak Semua Kartu</button>
+                    <button onclick="printSemuaKartu()" class="bg-purple-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-purple-700 transition shadow-sm"><i class="fas fa-print mr-2"></i> Cetak Semua Kartu</button>
                 </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -1326,16 +1342,16 @@ const firebaseConfig = {
                             
                             <!-- Template ID Card (Visual Preview di Layar Komputer) -->
                             <div id="card-print-container-${a.id}" class="card-print-source w-full max-w-[320px]">
-                                <div class="w-full h-[460px] bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-950 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border-4 border-white">
+                                <div class="w-full h-[460px] bg-gradient-to-b from-purple-700 via-purple-800 to-pink-950 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border-4 border-white">
                                     
-                                    <div class="absolute -right-16 -top-16 w-36 h-36 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
-                                    <div class="absolute -left-16 -bottom-16 w-40 h-40 bg-indigo-400 rounded-full opacity-25 blur-xl"></div>
+                                    <div class="absolute -right-16 -top-16 w-36 h-36 bg-purple-500 rounded-full opacity-20 blur-xl"></div>
+                                    <div class="absolute -left-16 -bottom-16 w-40 h-40 bg-pink-400 rounded-full opacity-25 blur-xl"></div>
                                     
                                     <!-- Bagian Atas Kartu -->
                                     <div class="text-center relative z-10">
                                         <div class="flex items-center justify-center gap-2 mb-1">
                                             <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-6 h-6 object-cover rounded-full">
-                                            <span class="text-xs font-bold uppercase tracking-widest text-blue-200">${appSettings.bandName}</span>
+                                            <span class="text-xs font-bold uppercase tracking-widest text-purple-200">${appSettings.bandName}</span>
                                         </div>
                                         <h4 class="text-sm font-black uppercase tracking-wider text-white">${appSettings.cardTitle}</h4>
                                         <div class="w-12 h-1 bg-yellow-400 mx-auto mt-2 rounded-full"></div>
@@ -1344,10 +1360,10 @@ const firebaseConfig = {
                                     <!-- Bagian Tengah Kartu -->
                                     <div class="text-center my-auto relative z-10 py-2 flex flex-col items-center">
                                         <img src="${a.fotoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-16 h-16 object-cover rounded-full border-2 border-yellow-400 mb-2 shadow-md bg-white">
-                                        <p class="text-[10px] uppercase tracking-wider text-blue-200 font-semibold mb-0.5">Nama Anggota</p>
+                                        <p class="text-[10px] uppercase tracking-wider text-purple-200 font-semibold mb-0.5">Nama Anggota</p>
                                         <h3 class="text-lg font-extrabold text-white mb-1 tracking-wide truncate px-2 max-w-[280px]">${a.namaLengkap}</h3>
                                         <p class="text-[10px] text-gray-300 font-semibold mb-2">Kelas: ${a.kelas || '-'}</p>
-                                        <span class="bg-yellow-400 text-indigo-950 text-xs font-black px-4 py-1 rounded-full shadow-md inline-block uppercase tracking-wider">${a.seksi}</span>
+                                        <span class="bg-yellow-400 text-pink-950 text-xs font-black px-4 py-1 rounded-full shadow-md inline-block uppercase tracking-wider">${a.seksi}</span>
                                     </div>
 
                                     <!-- Bagian Bawah Kartu -->
@@ -1355,7 +1371,7 @@ const firebaseConfig = {
                                         <div class="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-yellow-400">
                                             <div id="qrcode-print-${a.id}" class="flex justify-center"></div>
                                         </div>
-                                        <p class="text-[10px] text-blue-300 font-mono mt-3 uppercase tracking-widest">ID: ${a.username}</p>
+                                        <p class="text-[10px] text-purple-300 font-mono mt-3 uppercase tracking-widest">ID: ${a.username}</p>
                                     </div>
                                     
                                 </div>
@@ -1447,12 +1463,12 @@ const firebaseConfig = {
             <div class="glass-panel p-5 rounded-2xl mb-6 flex flex-col md:flex-row gap-4 md:items-end">
                 <div class="flex-1">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Jadwal Latihan</label>
-                    <select onchange="gantiRekapJadwal(this.value)" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    <select onchange="gantiRekapJadwal(this.value)" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-purple-500">
                         <option value="">-- Pilih Jadwal --</option>
                         ${jadwalSorted.map(j => `<option value="${j.id}" ${j.id === activeJadwalId ? 'selected' : ''}>${formatTanggalIndo(j.tanggal)} - ${j.agenda}</option>`).join('')}
                     </select>
                 </div>
-                <button onclick="cetakRekapPresensi()" ${!jadwalAktif ? 'disabled' : ''} class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"><i class="fas fa-print mr-2"></i> Cetak Rekap Presensi</button>
+                <button onclick="cetakRekapPresensi()" ${!jadwalAktif ? 'disabled' : ''} class="bg-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-purple-700 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"><i class="fas fa-print mr-2"></i> Cetak Rekap Presensi</button>
             </div>
 
             ${!jadwalAktif ? `<p class="text-gray-500 text-center py-10">Belum ada jadwal latihan yang bisa direkap. Buat jadwal terlebih dahulu di menu Jadwal.</p>` : `
@@ -1474,7 +1490,7 @@ const firebaseConfig = {
             <div class="glass-panel rounded-2xl overflow-hidden border border-gray-100">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="bg-blue-600 text-white">
+                        <thead class="bg-purple-600 text-white">
                             <tr>
                                 <th class="p-3 text-left">No</th>
                                 <th class="p-3 text-left">Nama Anggota</th>
@@ -1615,46 +1631,46 @@ const firebaseConfig = {
                     <form onsubmit="simpanPengaturan(event)" class="space-y-6">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Nama Aplikasi / Sistem</label>
-                            <input required type="text" name="appName" value="${appSettings.appName}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input required type="text" name="appName" value="${appSettings.appName}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-purple-500">
                             <p class="text-xs text-gray-400 mt-1">Nama ini akan tampil di menu utama, tab browser, dan dashboard.</p>
                         </div>
                         
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">URL Logo / Icon Aplikasi</label>
-                            <input required type="url" name="appIcon" value="${appSettings.appIcon}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input required type="url" name="appIcon" value="${appSettings.appIcon}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-purple-500">
                             <p class="text-xs text-gray-400 mt-1">Masukkan URL gambar logo berformat PNG/JPG. Disarankan rasio 1:1.</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Nama Grup Marching Band</label>
-                                <input required type="text" name="bandName" value="${appSettings.bandName}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                                <input required type="text" name="bandName" value="${appSettings.bandName}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-purple-500">
                                 <p class="text-xs text-gray-400 mt-1">Tampil di baris atas ID Card.</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Judul Dokumen ID Card</label>
-                                <input required type="text" name="cardTitle" value="${appSettings.cardTitle}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                                <input required type="text" name="cardTitle" value="${appSettings.cardTitle}" class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-purple-500">
                                 <p class="text-xs text-gray-400 mt-1">Judul kartu (Contoh: KARTU ANGGOTA, ID CARD, LENCANA).</p>
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Nama Pelatih (Penandatangan Laporan)</label>
-                            <input type="text" name="namaPelatih" value="${appSettings.namaPelatih || ''}" placeholder="Contoh: Hendra Wijaya, S.Pd." class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="namaPelatih" value="${appSettings.namaPelatih || ''}" placeholder="Contoh: Hendra Wijaya, S.Pd." class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 outline-none focus:ring-2 focus:ring-purple-500">
                             <p class="text-xs text-gray-400 mt-1">Nama ini akan otomatis tampil sebagai penandatangan pada lembar Cetak Rekap Presensi.</p>
                         </div>
 
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-md"><i class="fas fa-save mr-2"></i> Simpan Perubahan</button>
+                        <button type="submit" class="w-full bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 transition shadow-md"><i class="fas fa-save mr-2"></i> Simpan Perubahan</button>
                     </form>
                 </div>
 
                 <!-- Live Preview Visual -->
-                <div class="glass-panel p-6 rounded-3xl border border-gray-100 flex flex-col items-center justify-center text-center bg-gradient-to-b from-blue-50 to-white">
+                <div class="glass-panel p-6 rounded-3xl border border-gray-100 flex flex-col items-center justify-center text-center bg-gradient-to-b from-purple-50 to-white">
                     <h3 class="font-bold text-gray-700 mb-4 uppercase tracking-wider text-xs">Pratinjau Logo Saat Ini</h3>
                     <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-24 h-24 object-cover rounded-full shadow-lg border-4 border-white mb-4">
                     <h4 class="font-bold text-lg text-gray-800">${appSettings.appName}</h4>
-                    <p class="text-xs text-gray-500 mt-1">Identitas grup: <span class="font-semibold text-blue-600">${appSettings.bandName}</span></p>
-                    <div class="w-full border-t border-blue-100 mt-4 pt-4">
+                    <p class="text-xs text-gray-500 mt-1">Identitas grup: <span class="font-semibold text-purple-600">${appSettings.bandName}</span></p>
+                    <div class="w-full border-t border-purple-100 mt-4 pt-4">
                         <p class="text-[11px] text-gray-400 uppercase font-bold tracking-wider mb-1">Penandatangan Rekap Presensi</p>
                         <p class="text-sm font-semibold text-gray-700">${appSettings.namaPelatih ? appSettings.namaPelatih : '<span class="text-gray-400 italic">Belum diisi</span>'}</p>
                     </div>
@@ -1742,7 +1758,7 @@ const firebaseConfig = {
                         <option value="Pulang">Jam Pulang</option>
                     </select>
                 </div>
-                <button id="startScanBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg"><i class="fas fa-camera mr-2"></i> Buka Kamera Scanner</button>
+                <button id="startScanBtn" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition shadow-lg"><i class="fas fa-camera mr-2"></i> Buka Kamera Scanner</button>
             </div>
             <div id="scanner-ui" class="hidden max-w-lg mx-auto glass-panel p-4 rounded-2xl text-center">
                 <div id="reader" class="w-full rounded-xl overflow-hidden mb-4 shadow-inner bg-black"></div>
@@ -1772,12 +1788,12 @@ const firebaseConfig = {
                     <input required type="time" name="wkt" class="p-3 rounded-lg bg-gray-50 border">
                     <input required type="text" name="lok" placeholder="Lokasi (mis: Lap. Utama)" class="p-3 rounded-lg bg-gray-50 border">
                     <input required type="text" name="ag" placeholder="Agenda Latihan" class="p-3 rounded-lg bg-gray-50 border">
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-lg md:col-span-4 hover:bg-blue-700">Simpan Jadwal</button>
+                    <button type="submit" class="bg-purple-600 text-white font-bold py-3 rounded-lg md:col-span-4 hover:bg-purple-700">Simpan Jadwal</button>
                 </form>
             </div>
             <div class="space-y-4">
                 ${jadwal.map(j => `
-                    <div class="glass-panel p-4 rounded-xl flex justify-between items-center border-l-4 border-blue-500">
+                    <div class="glass-panel p-4 rounded-xl flex justify-between items-center border-l-4 border-purple-500">
                         <div>
                             <p class="font-bold text-gray-800 text-lg">${j.agenda}</p>
                             <p class="text-sm text-gray-500"><i class="fas fa-calendar mr-2"></i>${j.tanggal} | <i class="fas fa-clock mx-2"></i>${j.waktu} | <i class="fas fa-map-marker-alt mx-2"></i>${j.lokasi}</p>
@@ -1846,8 +1862,8 @@ const firebaseConfig = {
                 </div>
                 
                 <div class="flex flex-col md:flex-row gap-4 items-center mt-2">
-                    <input type="url" name="fileMat" placeholder="Tempel Link Materi (Google Drive, YouTube, dsb) - opsional" class="flex-1 p-3 rounded-lg bg-gray-50 border text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="w-full md:w-auto bg-blue-600 text-white px-8 font-bold rounded-lg py-3 hover:bg-blue-700 transition">Simpan Materi</button>
+                    <input type="url" name="fileMat" placeholder="Tempel Link Materi (Google Drive, YouTube, dsb) - opsional" class="flex-1 p-3 rounded-lg bg-gray-50 border text-sm text-gray-700 outline-none focus:ring-2 focus:ring-purple-500">
+                    <button type="submit" class="w-full md:w-auto bg-purple-600 text-white px-8 font-bold rounded-lg py-3 hover:bg-purple-700 transition">Simpan Materi</button>
                 </div>
             </form>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1857,7 +1873,7 @@ const firebaseConfig = {
                         <h4 class="font-bold text-lg text-gray-800 pr-24">${m.judul}</h4>
                         <p class="text-sm text-gray-500 mt-1 mb-2"><i class="fas fa-users mr-1"></i> ${m.targetSeksi}</p>
                         
-                        ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-bold block mb-3 hover:underline"><i class="fas fa-link mr-1"></i> Buka Link Materi</a>` : '<p class="text-xs text-gray-400 mb-3 italic">Tidak ada link materi</p>'}
+                        ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" rel="noopener" class="text-purple-600 text-xs font-bold block mb-3 hover:underline"><i class="fas fa-link mr-1"></i> Buka Link Materi</a>` : '<p class="text-xs text-gray-400 mb-3 italic">Tidak ada link materi</p>'}
                         
                         <button onclick="hapusMateri('${m.id}')" class="text-xs text-red-500 font-semibold hover:underline"><i class="fas fa-trash"></i> Hapus Materi</button>
                     </div>
@@ -1882,7 +1898,7 @@ const firebaseConfig = {
             <form onsubmit="simpanPengumuman(event)" class="glass-panel p-6 rounded-2xl mb-8 flex flex-col gap-4">
                 <input required type="text" name="jd" placeholder="Judul Pengumuman" class="p-3 rounded-lg bg-gray-50 border">
                 <textarea required name="isi" rows="3" placeholder="Isi Pengumuman..." class="p-3 rounded-lg bg-gray-50 border"></textarea>
-                <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">Publikasikan</button>
+                <button type="submit" class="bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700">Publikasikan</button>
             </form>
             <div class="space-y-4">
                 ${info.reverse().map(i => `
@@ -1913,10 +1929,11 @@ const firebaseConfig = {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Sisi Kiri: Profil & QR Code -->
                 <div class="lg:col-span-2 space-y-6">
-                    <div class="glass-panel p-6 rounded-3xl text-center bg-gradient-to-b from-blue-50 to-white">
-                        <img src="${u.fotoUrl || appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-24 h-24 object-cover rounded-full mx-auto mb-4 shadow-md border-4 border-white">
+                    <div class="bg-white p-6 rounded-3xl text-center border border-gray-100 shadow-sm relative overflow-hidden">
+                        <div class="h-20 -m-6 mb-0 bg-gradient-to-r from-purple-600 to-pink-500"></div>
+                        <img src="${u.fotoUrl || appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';" class="w-24 h-24 object-cover rounded-full mx-auto -mt-12 mb-4 shadow-md border-4 border-white relative z-10">
                         <h2 class="text-2xl font-bold text-gray-800">${u.namaLengkap}</h2>
-                        <p class="text-blue-600 font-semibold mb-2">${u.seksi}</p>
+                        <p class="text-purple-600 font-semibold mb-2">${u.seksi}</p>
                         <p class="text-xs text-gray-400 font-bold mb-6">${u.kelas} • ID: ${u.username}</p>
                         
                         <div class="bg-white p-4 rounded-2xl shadow-sm inline-block border border-gray-100 mb-6">
@@ -1960,8 +1977,8 @@ const firebaseConfig = {
                 <!-- Sisi Kanan: Pengumuman & Notifikasi Ulang Tahun/Jadwal/Materi -->
                 <div class="space-y-6 h-fit">
                     <!-- Notifikasi Update Center -->
-                    <div class="glass-panel p-6 rounded-2xl border border-gray-100">
-                        <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bell text-blue-500 mr-1 animate-bounce"></i> Pemberitahuan Hari Ini</h3>
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bell text-purple-500 mr-1 animate-bounce"></i> Pemberitahuan Hari Ini</h3>
                         <div class="space-y-4 max-h-[300px] overflow-y-auto pr-1">
                             ${notifHTML}
                         </div>
@@ -1969,9 +1986,9 @@ const firebaseConfig = {
 
                     <!-- Pengumuman Umum -->
                     ${latestInfo ? `
-                    <div class="glass-panel p-6 rounded-2xl border border-gray-100">
-                        <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bullhorn text-amber-500 mr-1"></i> Informasi Terbaru</h3>
-                        <div class="border-l-4 border-yellow-400 pl-4 py-1">
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <h3 class="font-extrabold text-sm text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-bullhorn text-pink-500 mr-1"></i> Informasi Terbaru</h3>
+                        <div class="border-l-4 border-pink-400 pl-4 py-1">
                             <h4 class="font-bold text-gray-800 text-sm">${latestInfo.judul}</h4>
                             <p class="text-[10px] text-gray-400 mb-2">${latestInfo.tanggal}</p>
                             <p class="text-xs text-gray-600 whitespace-pre-wrap">${latestInfo.isi}</p>
@@ -1982,7 +1999,7 @@ const firebaseConfig = {
             </div>
         `;
         UI.render(renderLayout('user', html));
-        setTimeout(() => { new QRCode(document.getElementById("qrcode-box"), { text: u.username, width: 180, height: 180, colorDark : "#1e3a8a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H }); }, 300);
+        setTimeout(() => { new QRCode(document.getElementById("qrcode-box"), { text: u.username, width: 180, height: 180, colorDark : "#6d28d9", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H }); }, 300);
     }
 
     async function viewUserJadwal() {
@@ -1992,13 +2009,13 @@ const firebaseConfig = {
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Jadwal Saya</h2>
             <div class="space-y-4">
                 ${jadwal.length === 0 ? '<p class="text-gray-500">Belum ada jadwal latihan.</p>' : jadwal.map(j => `
-                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-blue-500 shadow-sm relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 text-blue-50 opacity-50 text-7xl"><i class="fas fa-calendar"></i></div>
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-purple-500 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-purple-50 opacity-50 text-7xl"><i class="fas fa-calendar"></i></div>
                         <h3 class="font-bold text-xl text-gray-800 relative z-10">${j.agenda}</h3>
                         <div class="mt-4 space-y-2 relative z-10">
-                            <p class="text-sm text-gray-600"><i class="fas fa-calendar-day w-6 text-center text-blue-400"></i> ${j.tanggal}</p>
-                            <p class="text-sm text-gray-600"><i class="fas fa-clock w-6 text-center text-blue-400"></i> Pukul ${j.waktu}</p>
-                            <p class="text-sm text-gray-600"><i class="fas fa-map-marker-alt w-6 text-center text-blue-400"></i> ${j.lokasi}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-calendar-day w-6 text-center text-purple-400"></i> ${j.tanggal}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-clock w-6 text-center text-purple-400"></i> Pukul ${j.waktu}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-map-marker-alt w-6 text-center text-purple-400"></i> ${j.lokasi}</p>
                         </div>
                     </div>
                 `).join('')}
@@ -2062,11 +2079,11 @@ const firebaseConfig = {
                 ${myMateri.length === 0 ? '<p class="text-gray-500">Belum ada materi untuk seksi Anda.</p>' : myMateri.map(m => `
                     <div class="glass-panel p-5 rounded-xl flex flex-col md:flex-row md:items-center justify-between shadow-sm">
                         <div class="flex items-center mb-3 md:mb-0">
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mr-4 shrink-0"><i class="fas fa-music"></i></div>
+                            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl mr-4 shrink-0"><i class="fas fa-music"></i></div>
                             <div>
                                 <h4 class="font-bold text-gray-800">${m.judul}</h4>
                                 <p class="text-xs text-gray-500 mb-2">Target: ${m.targetSeksi}</p>
-                                ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition inline-block font-semibold shadow-sm"><i class="fas fa-download mr-1"></i> Buka File</a>` : ''}
+                                ${m.fileUrl ? `<a href="${m.fileUrl}" target="_blank" class="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-100 transition inline-block font-semibold shadow-sm"><i class="fas fa-download mr-1"></i> Buka File</a>` : ''}
                             </div>
                         </div>
                         <div class="text-left md:text-right shrink-0">
@@ -2107,13 +2124,13 @@ const firebaseConfig = {
 
     window.viewLoginSelector = () => {
         UI.render(`
-            <div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-indigo-700 p-4">
+            <div class="flex items-center justify-center h-full bg-gradient-to-br from-purple-500 to-pink-700 p-4">
                 <div class="glass-panel max-w-sm w-full p-8 rounded-3xl text-center fade-in">
                     <img src="${appSettings.appIcon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3387/3387063.png';" class="w-20 h-20 object-cover rounded-full mx-auto mb-6 shadow-lg border-4 border-white">
                     <h1 class="text-2xl font-bold text-gray-800 mb-2">${appSettings.appName}</h1>
                     <p class="text-gray-500 text-sm mb-8">Pilih akses masuk Anda</p>
-                    <button onclick="viewLoginAdmin()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl mb-4 hover:bg-blue-700 transition shadow-lg"><i class="fas fa-user-shield mr-2"></i> Masuk sebagai Pelatih</button>
-                    <button onclick="viewLoginUser()" class="w-full bg-white text-blue-600 border-2 border-blue-100 font-bold py-4 rounded-xl hover:bg-blue-50 transition shadow-sm"><i class="fas fa-users mr-2"></i> Masuk sebagai Anggota</button>
+                    <button onclick="viewLoginAdmin()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl mb-4 hover:bg-purple-700 transition shadow-lg"><i class="fas fa-user-shield mr-2"></i> Masuk sebagai Pelatih</button>
+                    <button onclick="viewLoginUser()" class="w-full bg-white text-purple-600 border-2 border-purple-100 font-bold py-4 rounded-xl hover:bg-purple-50 transition shadow-sm"><i class="fas fa-users mr-2"></i> Masuk sebagai Anggota</button>
                 </div>
             </div>
         `);
@@ -2121,7 +2138,7 @@ const firebaseConfig = {
 
     window.viewLoginAdmin = () => {
         UI.render(`
-            <div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-indigo-700 p-4">
+            <div class="flex items-center justify-center h-full bg-gradient-to-br from-purple-500 to-pink-700 p-4">
                 <div class="glass-panel max-w-sm w-full p-8 rounded-3xl fade-in relative">
                     <button onclick="viewLoginSelector()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-700"><i class="fas fa-arrow-left"></i> Kembali</button>
                     <div class="text-center mt-6 mb-8">
@@ -2129,10 +2146,10 @@ const firebaseConfig = {
                         <h2 class="text-xl font-bold text-gray-800">Login Pelatih</h2>
                     </div>
                     <form onsubmit="handleLoginAdmin(event)" class="space-y-4">
-                        <div><input required type="email" id="admEmail" placeholder="Email Firebase Auth" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                        <div><input required type="password" id="admPass" placeholder="Password" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><input required type="email" id="admEmail" placeholder="Email Firebase Auth" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"></div>
+                        <div><input required type="password" id="admPass" placeholder="Password" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"></div>
                         ${IS_PREVIEW ? '<p class="text-xs text-red-500 text-center font-bold">*Mode Preview: Ketik sembarang untuk masuk</p>' : ''}
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg mt-2">Masuk Panel Admin</button>
+                        <button type="submit" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition shadow-lg mt-2">Masuk Panel Admin</button>
                     </form>
                 </div>
             </div>
@@ -2141,7 +2158,7 @@ const firebaseConfig = {
 
     window.viewLoginUser = () => {
         UI.render(`
-            <div class="flex items-center justify-center h-full bg-gradient-to-br from-blue-500 to-indigo-700 p-4">
+            <div class="flex items-center justify-center h-full bg-gradient-to-br from-purple-500 to-pink-700 p-4">
                 <div class="glass-panel max-w-sm w-full p-8 rounded-3xl fade-in relative">
                     <button onclick="viewLoginSelector()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-700"><i class="fas fa-arrow-left"></i> Kembali</button>
                     <div class="text-center mt-6 mb-8">
@@ -2149,9 +2166,9 @@ const firebaseConfig = {
                         <h2 class="text-xl font-bold text-gray-800">Login Anggota</h2>
                     </div>
                     <form onsubmit="handleLoginUser(event)" class="space-y-4">
-                        <div><input required type="text" id="usrName" placeholder="Username (contoh: user1)" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                        <div><input required type="password" id="usrPass" placeholder="Password (contoh: 123)" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg mt-2">Masuk Panel Anggota</button>
+                        <div><input required type="text" id="usrName" placeholder="Username (contoh: user1)" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"></div>
+                        <div><input required type="password" id="usrPass" placeholder="Password (contoh: 123)" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"></div>
+                        <button type="submit" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition shadow-lg mt-2">Masuk Panel Anggota</button>
                     </form>
                 </div>
             </div>
