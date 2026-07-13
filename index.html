@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>e-Marching Band</title>
+    <title>Sistem Admin Marching Band</title>
     
     <!-- PWA Manifest Injection via Data URI -->
     <script>
@@ -2022,22 +2022,39 @@ const firebaseConfig = {
         const myId = state.currentUser.data.id;
         const presensiList = await DB.getUserPresensi(myId);
         const jadwal = await DB.get('jadwal');
-        
+
+        // Gabungkan seluruh record presensi milik anggota berdasarkan idJadwal, sehingga
+        // satu jadwal latihan = satu baris (Masuk & Pulang digabung dalam baris yang sama).
+        // Jika anggota sempat scan lebih dari satu kali pada jadwal yang sama, hanya jam
+        // TERBARU (paling akhir) yang disimpan sebagai catatan kehadiran.
+        const rekapPerJadwal = {};
+        presensiList.forEach(p => {
+            if (!rekapPerJadwal[p.idJadwal]) {
+                rekapPerJadwal[p.idJadwal] = { idJadwal: p.idJadwal, waktuMasuk: null, waktuPulang: null };
+            }
+            const rec = rekapPerJadwal[p.idJadwal];
+            if (p.waktuMasuk && (!rec.waktuMasuk || p.waktuMasuk > rec.waktuMasuk)) rec.waktuMasuk = p.waktuMasuk;
+            if (p.waktuPulang && (!rec.waktuPulang || p.waktuPulang > rec.waktuPulang)) rec.waktuPulang = p.waktuPulang;
+        });
+
+        // Lengkapi info jadwal & urutkan dari tanggal latihan paling baru
+        let rekapList = Object.values(rekapPerJadwal).map(r => {
+            const j = jadwal.find(x => x.id === r.idJadwal) || { agenda: 'Jadwal Dihapus', tanggal: '' };
+            return { ...r, agenda: j.agenda, tanggal: j.tanggal };
+        }).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
         let html = `
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Riwayat Kehadiran</h2>
             <div class="space-y-4">
-                ${presensiList.length === 0 ? '<p class="text-gray-500 text-center mt-10">Belum ada data kehadiran terekam.</p>' : presensiList.map(p => {
-                    const j = jadwal.find(x => x.id === p.idJadwal) || {agenda: 'Jadwal Dihapus', tanggal: '-'};
-                    return `
+                ${rekapList.length === 0 ? '<p class="text-gray-500 text-center mt-10">Belum ada data kehadiran terekam.</p>' : rekapList.map(r => `
                     <div class="glass-panel p-4 rounded-xl border border-gray-100 flex flex-col md:flex-row justify-between md:items-center">
-                        <div class="mb-3 md:mb-0"><p class="font-bold text-gray-800">${j.agenda}</p><p class="text-xs text-gray-500">${j.tanggal}</p></div>
+                        <div class="mb-3 md:mb-0"><p class="font-bold text-gray-800">${r.agenda}</p><p class="text-xs text-gray-500">${formatTanggalIndo(r.tanggal)}</p></div>
                         <div class="flex gap-4">
-                            <div class="text-center bg-green-50 p-2 rounded-lg min-w-[80px]"><p class="text-xs text-green-600 font-bold mb-1">MASUK</p><p class="text-sm font-semibold text-gray-800">${p.waktuMasuk || '--:--'}</p></div>
-                            <div class="text-center bg-gray-50 p-2 rounded-lg min-w-[80px]"><p class="text-xs text-gray-500 font-bold mb-1">PULANG</p><p class="text-sm font-semibold text-gray-800">${p.waktuPulang || '--:--'}</p></div>
+                            <div class="text-center bg-green-50 p-2 rounded-lg min-w-[80px]"><p class="text-xs text-green-600 font-bold mb-1">MASUK</p><p class="text-sm font-semibold text-gray-800">${r.waktuMasuk || '--:--'}</p></div>
+                            <div class="text-center bg-gray-50 p-2 rounded-lg min-w-[80px]"><p class="text-xs text-gray-500 font-bold mb-1">PULANG</p><p class="text-sm font-semibold text-gray-800">${r.waktuPulang || '--:--'}</p></div>
                         </div>
                     </div>
-                    `
-                }).join('')}
+                `).join('')}
             </div>
         `;
         UI.render(renderLayout('user', html));
