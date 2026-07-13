@@ -25,13 +25,16 @@
     <!-- Tailwind CSS, FontAwesome, QRCode.js, HTML5-QRCode, EmailJS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         /* FULL PAGE OVERRIDE (Menutupi Layout Blogger) */
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; overflow: hidden; letter-spacing: -0.01em; }
         #app-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; background-color: #f8fafc; overflow-y: auto; }
         
         /* Glassmorphism Utilities */
@@ -151,7 +154,7 @@
         }
 
         /* Struktur Visual Lembar Cetak Rekap Presensi */
-        .rekap-print-sheet { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; width: 100%; }
+        .rekap-print-sheet { font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; width: 100%; }
         .rekap-print-header { display: flex; align-items: center; gap: 14px; border-bottom: 2.5px solid #1d4ed8; padding-bottom: 10px; margin-bottom: 14px; }
         .rekap-print-header img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; }
         .rekap-print-header h1 { font-size: 13pt; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; color: #1e3a8a; }
