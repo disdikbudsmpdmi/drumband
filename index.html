@@ -445,6 +445,48 @@ const firebaseConfig = {
         }
     };
 
+    // Fungsi Bunyi "Bell" Singkat untuk Notifikasi Scan Presensi Berhasil
+    // Disintesis langsung via Web Audio API (tanpa file eksternal) agar ringan & tetap bekerja offline
+    let bellAudioCtx = null;
+    const playBellSound = () => {
+        try {
+            // Gunakan satu AudioContext yang di-reuse agar lebih responsif saat scan berulang kali
+            if (!bellAudioCtx || bellAudioCtx.state === 'closed') {
+                bellAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (bellAudioCtx.state === 'suspended') bellAudioCtx.resume();
+
+            const ctx = bellAudioCtx;
+            const now = ctx.currentTime;
+            const master = ctx.createGain();
+            master.gain.value = 0.5;
+            master.connect(ctx.destination);
+
+            // Kombinasi nada dasar + harmonik agar bunyi menyerupai lonceng/bell yang cerah dan singkat
+            const nadaLonceng = [
+                { freq: 1567.98, vol: 0.55, delay: 0 },     // G6 - nada utama, dominan
+                { freq: 2349.32, vol: 0.22, delay: 0 },     // D7 - harmonik atas
+                { freq: 3135.96, vol: 0.12, delay: 0.02 }   // G7 - kilau lonceng
+            ];
+
+            nadaLonceng.forEach(n => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = n.freq;
+                const start = now + n.delay;
+                gain.gain.setValueAtTime(n.vol, start);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + 0.55);
+                osc.connect(gain);
+                gain.connect(master);
+                osc.start(start);
+                osc.stop(start + 0.6);
+            });
+        } catch (e) {
+            console.warn("Tidak dapat memutar suara bell:", e);
+        }
+    };
+
     // Pemuatan suara secara asinkronus (untuk beberapa browser seperti Chrome)
     if ('speechSynthesis' in window) {
         window.speechSynthesis.onvoiceschanged = () => {
@@ -1655,11 +1697,8 @@ const firebaseConfig = {
                     }
                     await DB.add('presensi', dataPresensi);
                     
-                    // Mainkan Umpan Balik Suara (Text-to-Speech) Berbahasa Indonesia (Suara Perempuan)
-                    const pesanSuara = jenisScan === 'Masuk' 
-                        ? `Hallo ${anggota.namaLengkap}, Presensi Masuk berhasil disimpan.` 
-                        : `Hallo ${anggota.namaLengkap}, Presensi Pulang berhasil disimpan, hati-hati dijalan ya.`;
-                    speakVoice(pesanSuara);
+                    // Mainkan bunyi bell singkat sebagai tanda presensi berhasil disimpan
+                    playBellSound();
                     
                     if(anggota.emailOrangTua) sendEmailJS(anggota.emailOrangTua, anggota.namaLengkap, `Scan ${jenisScan} Latihan`, jamS);
                 } else {
