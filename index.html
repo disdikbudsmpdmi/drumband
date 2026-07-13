@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Marching Band</title>
+    <title>Sistem Admin Marching Band</title>
     
     <!-- PWA Manifest Injection via Data URI -->
     <script>
@@ -1807,6 +1807,10 @@ const firebaseConfig = {
         let fileName = null;
 
         try {
+            if (!IS_PREVIEW && !auth.currentUser) {
+                throw new Error("Sesi login admin tidak aktif/terputus. Silakan logout lalu login ulang sebagai Pelatih, kemudian coba lagi.");
+            }
+
             // Proses Upload File
             if (file) {
                 fileName = file.name;
@@ -1824,8 +1828,10 @@ const firebaseConfig = {
             UI.alert("Materi tersimpan!", "green"); 
             viewAdminMateri();
         } catch (err) {
-            console.error(err);
-            UI.alert("Gagal menyimpan materi. Pastikan ukuran file sesuai.", "red");
+            console.error("Gagal menyimpan materi:", err);
+            // Tampilkan kode & pesan error asli dari Firebase agar mudah didiagnosa
+            const kodeError = err.code ? ` (${err.code})` : '';
+            UI.alert(`Gagal menyimpan materi${kodeError}: ${err.message || 'Kesalahan tidak diketahui'}`, "red");
             btn.innerText = originalText; btn.disabled = false;
         }
     };
